@@ -1,6 +1,6 @@
 # PLAN.md — krx-stock-scoring
 
-> **v0.2 (2026-09-19)** · 기준: `SPEC.md` **v2.3** · M0 실측: `docs/m0/M0_REPORT.md`
+> **v0.3 (2026-09-19)** · 기준: `SPEC.md` **v2.3** · M0 실측: `docs/m0/M0_REPORT.md`
 > SPEC과 어긋나면 SPEC이 기준이다. 이 문서는 **구현 순서·구조·테스트 전략**만 정한다.
 
 ---
@@ -53,12 +53,13 @@ krx-stock-scoring/
       schema.sql             kss 전용 DB 스키마 (멱등)
       writer.py              run 생성·청크 저장·publish 트랜잭션
     checks.py                출처별 품질 게이트 → kss_source_checks
+    compute.py               전 종목 계산·요약·게시 전 검증 (I/O 없음)
     state.py                 그래프 상태 (TypedDict — 참조·요약만)
     graph.py                 LangGraph 노드·조건 분기 (유일하게 langgraph를 import)
     nodes.py                 노드 = domain·store 호출 포장
     run.py                   CLI: score --date T [--dry-run] [--tickers …] [--profile technical] → graph 실행
     archive.py               Parquet 내보내기·복원 검증 (M4)
-  scripts/                   m0_probe.py · apply_schema.py · draw_architecture.py · export_graph.py
+  scripts/                   m0_probe.py · apply_schema.py · export_fixture.py · draw_architecture.py · export_graph.py · draw_graph.py
   tests/                     test_{module}_*.py, fixtures/ (실DB 표본 CSV)
   .github/workflows/         ci.yml (M0) · score.yml (M4)
 ```
@@ -73,6 +74,49 @@ krx-stock-scoring/
 6. **검증**: 종목 수 합계 = 유니버스, 상태별 합, 점수 범위, 규칙 해시가 run과 일치하는지 확인.
 7. **저장·게시**: 500행 청크로 저장한 뒤 한 트랜잭션에서 `kss_publications` 포인터를 바꾼다.
 
+### 2.3 배치 그래프 (LangGraph)
+
+![채점 배치 그래프](img/graph.png)
+
+> 정본은 코드(`scoring/graph.py`)다. Mermaid 도식 `docs/GRAPH.md`는 `scripts/export_graph.py`가 컴파일된 그래프에서 생성하고, 코드와 어긋나면 `tests/test_graph.py`가 실패한다. 위 그림은 `scripts/draw_graph.py`가 **같은 그래프의 노드·간선**을 읽어 그린다(설명 없는 노드가 생기면 그리기가 실패한다).
+
+**왜 얇은 층인가.** 배치는 LLM 없이 한 방향으로 흐르는 계산이다. 그래서 LangGraph에는 **순서와 분기**만 맡긴다. 계산 규칙은 `domain/`, 저장·게시는 `store/`에 있고 LangGraph 없이 테스트된다. `graph.py`만 `langgraph`를 import한다(verify N4 방식, SPEC §10 v2.3).
+
+| 노드 | 하는 일 | 상위 읽기 | kss 쓰기 | `kss_runs.status` |
+|---|---|:-:|:-:|---|
+| `calendar` | 거래일 달력(일봉 날짜 ∩ 지수 날짜)과 T 결정. 실행 시각(자정 이후 등)과 무관 | ✅ | | |
+| `create_run` | 실행 행을 **먼저** 기록 — 이후 어디서 실패해도 흔적이 남는다 | | ✅ | `created → checking` |
+| `gate` | 시장별 T일 일봉 저장 커버리지 ≥ 99%, `ksc_meta` 갱신일·달력 불일치 확인 → `kss_source_checks` | ✅ | ✅ | |
+| `wait` | (게이트 미달) 게시하지 않고 끝낸다. M4 복구 잡이 다시 집는다 | | ✅ | `waiting_upstream` |
+| `load` | 최근 400거래일 일봉을 서버 측 커서로 적재(≈108만 행, 약 31초), 종목·드리프트 메타 | ✅ | | `computing` |
+| `compute` | 분류 → 기술 5항목 → 집계. 순수 함수, I/O 없음(2,771종목 약 7초) | | | |
+| `validate` | 종목 수 = 유니버스, 종목당 항목 5개, scored ⇒ 관측률 1, 비완전 관측의 랭킹 자격 금지 | | | `validating` |
+| `persist` | 유니버스·점수·근거를 500행 청크로 저장한 뒤 행 수를 다시 세어 대조 | | ✅ | |
+| `publish` | advisory lock → 게시 포인터 교체 → 이력, **한 트랜잭션** | | ✅ | `published` |
+| `cross` | 같은 기준일(d = T) alerts 신호와 점수를 연결, `available_at_signal`·주봉 품질 표지 | ✅ | ✅ | |
+
+**분기는 하나다.** `gate` 뒤 조건 간선(`route_after_gate`)이 통과면 `load`로, 미달이면 `wait`로 보낸다. 시장 전체 장애일 때 이전 게시본을 유지하려는 것이다(SPEC §6.3). 개별 종목 누락은 분기하지 않고 종목 상태(`insufficient_data`·위험 표지)로 드러난다.
+
+**상태와 문맥을 나눈다.**
+- `RunState`(그래프 상태): `profile · requested_t · trigger · dry_run · t · run_id · gate_ok · status · stats` — 요약만.
+- `RunContext`(실행 문맥): DB 연결, 규칙, 스냅샷(일봉 108만 행), 계산 결과. 그래프를 만들 때 노드 클로저에 묶는다 → 상태·체크포인트가 대량 데이터를 복제하지 않는다(SPEC §10).
+
+**실패와 드라이런.**
+- 어느 노드에서든 예외가 나면 `run.py`가 실행을 `failed`로 기록하고 0이 아닌 코드로 끝난다. 게시 포인터는 `publish` 트랜잭션 안에서만 바뀌므로 **이전 게시본이 그대로 보인다** — `tests/test_writer_db.py`가 실DB에서 확인한다.
+- `--dry-run`이면 `create_run · persist · publish · cross`가 kss에 쓰지 않는다. 계산과 검증은 똑같이 돈다.
+
+**M4에서 더해질 것.** `repository_dispatch` 트리거·복구 큐·heartbeat·입력 스냅샷/아카이브. 노드를 추가하면 `scripts/export_graph.py`와 `scripts/draw_graph.py`(NOTES)를 함께 고친다.
+
+다시 그리기:
+
+```bash
+venv/bin/python scripts/export_graph.py                     # docs/GRAPH.md (Mermaid)
+venv/bin/python scripts/draw_graph.py docs/img/graph.svg    # 그림 원본
+"/Applications/Google Chrome.app/Contents/MacOS/Google Chrome" --headless=new --hide-scrollbars \
+  --force-device-scale-factor=2 --window-size=1500,1270 \
+  --screenshot="$PWD/docs/img/graph.png" "file://$PWD/docs/img/graph.svg"
+```
+
 ---
 
 ## 3. 데이터 모델 — 마일스톤별 도입
@@ -81,13 +125,13 @@ SPEC §7.2의 객체를 **필요한 마일스톤에** 만든다. 열 이름은 M
 
 | 객체 | 도입 | 비고 |
 |---|---|---|
-| `kss_runs` · `kss_scores` · `kss_score_parts` · `kss_publications` · `kss_publication_history` · `kss_source_checks` · `kss_universe_snapshots` | **M1** | `kss_score_parts`는 정규 테이블(run_id, ticker, item). 10거래일 뒤 Parquet로 옮기고 삭제(M4) |
+| `kss_runs` · `kss_scores` · `kss_score_parts` · `kss_publications` · `kss_publication_history` · `kss_source_checks` · `kss_universe_snapshots` | **M1** | `kss_score_parts`는 정규 테이블(run_id, ticker, item). **3거래일** 뒤 Parquet로 옮기고 삭제(M4) |
 | `kss_sector_stats` · `kss_financial_versions` · `kss_corp_map` | M2 | |
 | `kss_disclosures` · `kss_risk_events` · `kss_lexicon` · `kss_lexicon_versions` | M3 | |
 | `kss_input_snapshots` · `kss_signal_cross` | M1(cross는 기술 전용 `partial_technical`) · M4(snapshot) | |
 | `kss_news_observations` | M3 이후(선택) | |
 
-용량 예산: **M1 첫 전 종목 실행에서 하루 실제 크기를 재고** 보존 기간을 확정한다(SPEC §7.4). 경고 400 MB, 신규 상세 저장 중단 450 MB.
+용량 예산(SPEC v2.4 §7.4, M1 실측 후 확정): **점수 252 · 근거 3 · 유니버스 20거래일**, 경고 400 MB · 신규 상세 저장 중단 450 MB. M1 실측 하루 ~6.9 MB(점수 1.2 · 근거 5 · 유니버스 0.5, 기술 5항목). M2 `common` 첫 실행에서 행 크기를 다시 재고, 넘치면 점수 행 중복 열 축소·`technical` 프로필 중단.
 
 ---
 
@@ -221,5 +265,6 @@ SPEC §11.2·§12를 따른다. **수급·공매도는 보존 구간이 약 2개
 
 | 판 | 일자 | 내용 |
 |---|---|---|
+| v0.3 | 2026-09-19 | §2.3 배치 그래프(LangGraph) 그림·노드 설명 추가, 디렉토리에 compute.py·스크립트 반영 |
 | v0.2 | 2026-09-19 | 아키텍처를 이미지로(§2), LangGraph 얇은 그래프 층 채택(원칙 6·§2.1·§7) |
 | v0.1 | 2026-09-19 | 초안 — SPEC v2.2, M0 실측 반영. 단계형 구현, 전용 DB, derived_zero, M4 dispatch |

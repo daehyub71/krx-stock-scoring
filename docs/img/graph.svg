@@ -1,0 +1,102 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1500" height="1270" viewBox="0 0 1500 1270">
+<defs><marker id="m" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0,0 L10,5 L0,10 z" fill="#0F766E"/></marker></defs>
+<rect width="1500" height="1270" fill="#FFFFFF"/>
+<text x="40" y="46" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="24" fill="#0F172A" font-weight="800" text-anchor="start">채점 배치 그래프 (LangGraph)</text>
+<text x="40" y="72" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="13" fill="#475569" font-weight="400" text-anchor="start">scoring/graph.py — 노드는 domain·store 호출을 감싼 얇은 층. 상태에는 요약만, 대량 데이터는 실행 문맥에</text>
+<rect x="620.0" y="92" width="120" height="34" rx="17" fill="#FFFFFF" stroke="#0F766E" stroke-width="1.5"/>
+<text x="680.0" y="114" font-family="Menlo,'SF Mono',Consolas,monospace" font-size="12" fill="#0F766E" font-weight="700" text-anchor="middle">START</text>
+<path d="M680.0,126 L680.0,148" fill="none" stroke="#0F766E" stroke-width="1.8" marker-end="url(#m)"/>
+<rect x="470" y="150" width="420" height="70" rx="12" fill="#F0FDFA" stroke="#0F766E" stroke-width="1.6"/>
+<text x="486" y="175" font-family="Menlo,'SF Mono',Consolas,monospace" font-size="15" fill="#0F766E" font-weight="700" text-anchor="start">calendar</text>
+<text x="486" y="195" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="12" fill="#0F172A" font-weight="400" text-anchor="start">거래일 달력 = 일봉 날짜 ∩ 지수 날짜</text>
+<text x="486" y="211" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="11.5" fill="#475569" font-weight="400" text-anchor="start">T 결정 — 실행 시각(자정 이후)과 무관</text>
+<rect x="908" y="164" width="50.0" height="20" rx="10" fill="#475569" stroke="#475569" stroke-width="0"/>
+<text x="933.0" y="178" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="11" fill="#FFFFFF" font-weight="700" text-anchor="middle">상위 읽기</text>
+<rect x="470" y="246" width="420" height="70" rx="12" fill="#F0FDFA" stroke="#0F766E" stroke-width="1.6"/>
+<text x="486" y="271" font-family="Menlo,'SF Mono',Consolas,monospace" font-size="15" fill="#0F766E" font-weight="700" text-anchor="start">create_run</text>
+<text x="486" y="291" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="12" fill="#0F172A" font-weight="400" text-anchor="start">kss_runs에 실행 행을 먼저 기록</text>
+<text x="486" y="307" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="11.5" fill="#475569" font-weight="400" text-anchor="start">이후 실패해도 기록이 남는다</text>
+<rect x="908" y="260" width="57.2" height="20" rx="10" fill="#6D28D9" stroke="#6D28D9" stroke-width="0"/>
+<text x="936.6" y="274" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="11" fill="#FFFFFF" font-weight="700" text-anchor="middle">kss 쓰기</text>
+<text x="452" y="286" font-family="Menlo,'SF Mono',Consolas,monospace" font-size="12" fill="#B45309" font-weight="600" text-anchor="end">kss_runs.status: created → checking</text>
+<path d="M680.0,220 L680.0,244" fill="none" stroke="#0F766E" stroke-width="1.8" marker-end="url(#m)"/>
+<rect x="470" y="342" width="420" height="70" rx="12" fill="#F0FDFA" stroke="#0F766E" stroke-width="1.6"/>
+<text x="486" y="367" font-family="Menlo,'SF Mono',Consolas,monospace" font-size="15" fill="#0F766E" font-weight="700" text-anchor="start">gate</text>
+<text x="486" y="387" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="12" fill="#0F172A" font-weight="400" text-anchor="start">시장별 T일 일봉 커버리지 ≥ 99% · ksc_meta 대조</text>
+<text x="486" y="403" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="11.5" fill="#475569" font-weight="400" text-anchor="start">결과를 kss_source_checks에 기록</text>
+<rect x="908" y="356" width="50.0" height="20" rx="10" fill="#475569" stroke="#475569" stroke-width="0"/>
+<text x="933.0" y="370" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="11" fill="#FFFFFF" font-weight="700" text-anchor="middle">상위 읽기</text>
+<rect x="966.0" y="356" width="57.2" height="20" rx="10" fill="#6D28D9" stroke="#6D28D9" stroke-width="0"/>
+<text x="994.6" y="370" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="11" fill="#FFFFFF" font-weight="700" text-anchor="middle">kss 쓰기</text>
+<path d="M680.0,316 L680.0,340" fill="none" stroke="#0F766E" stroke-width="1.8" marker-end="url(#m)"/>
+<rect x="470" y="438" width="420" height="70" rx="12" fill="#F0FDFA" stroke="#0F766E" stroke-width="1.6"/>
+<text x="486" y="463" font-family="Menlo,'SF Mono',Consolas,monospace" font-size="15" fill="#0F766E" font-weight="700" text-anchor="start">load</text>
+<text x="486" y="483" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="12" fill="#0F172A" font-weight="400" text-anchor="start">최근 400거래일 일봉을 서버 측 커서로 적재</text>
+<text x="486" y="499" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="11.5" fill="#475569" font-weight="400" text-anchor="start">종목·드리프트 메타 (≈108만 행, 31초)</text>
+<rect x="908" y="452" width="50.0" height="20" rx="10" fill="#475569" stroke="#475569" stroke-width="0"/>
+<text x="933.0" y="466" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="11" fill="#FFFFFF" font-weight="700" text-anchor="middle">상위 읽기</text>
+<text x="452" y="478" font-family="Menlo,'SF Mono',Consolas,monospace" font-size="12" fill="#B45309" font-weight="600" text-anchor="end">kss_runs.status: computing</text>
+<path d="M680.0,412 L680.0,436" fill="none" stroke="#0F766E" stroke-width="1.8" marker-end="url(#m)"/>
+<rect x="470" y="534" width="420" height="70" rx="12" fill="#FFFFFF" stroke="#0F766E" stroke-width="1.6"/>
+<text x="486" y="559" font-family="Menlo,'SF Mono',Consolas,monospace" font-size="15" fill="#0F766E" font-weight="700" text-anchor="start">compute</text>
+<text x="486" y="579" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="12" fill="#0F172A" font-weight="400" text-anchor="start">분류 → 기술 5항목 → 집계 (순수 함수)</text>
+<text x="486" y="595" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="11.5" fill="#475569" font-weight="400" text-anchor="start">2,771종목 7초 · I/O 없음</text>
+<path d="M680.0,508 L680.0,532" fill="none" stroke="#0F766E" stroke-width="1.8" marker-end="url(#m)"/>
+<rect x="470" y="630" width="420" height="70" rx="12" fill="#F0FDFA" stroke="#0F766E" stroke-width="1.6"/>
+<text x="486" y="655" font-family="Menlo,'SF Mono',Consolas,monospace" font-size="15" fill="#0F766E" font-weight="700" text-anchor="start">validate</text>
+<text x="486" y="675" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="12" fill="#0F172A" font-weight="400" text-anchor="start">종목 수 = 유니버스 · 종목당 항목 5개</text>
+<text x="486" y="691" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="11.5" fill="#475569" font-weight="400" text-anchor="start">scored ⇒ 관측률 1 · 비완전 관측 랭킹 금지</text>
+<text x="452" y="670" font-family="Menlo,'SF Mono',Consolas,monospace" font-size="12" fill="#B45309" font-weight="600" text-anchor="end">kss_runs.status: validating</text>
+<path d="M680.0,604 L680.0,628" fill="none" stroke="#0F766E" stroke-width="1.8" marker-end="url(#m)"/>
+<rect x="470" y="726" width="420" height="70" rx="12" fill="#F0FDFA" stroke="#0F766E" stroke-width="1.6"/>
+<text x="486" y="751" font-family="Menlo,'SF Mono',Consolas,monospace" font-size="15" fill="#0F766E" font-weight="700" text-anchor="start">persist</text>
+<text x="486" y="771" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="12" fill="#0F172A" font-weight="400" text-anchor="start">점수·근거·유니버스를 500행 청크로 저장</text>
+<text x="486" y="787" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="11.5" fill="#475569" font-weight="400" text-anchor="start">저장 행 수를 다시 세어 대조</text>
+<rect x="908" y="740" width="57.2" height="20" rx="10" fill="#6D28D9" stroke="#6D28D9" stroke-width="0"/>
+<text x="936.6" y="754" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="11" fill="#FFFFFF" font-weight="700" text-anchor="middle">kss 쓰기</text>
+<path d="M680.0,700 L680.0,724" fill="none" stroke="#0F766E" stroke-width="1.8" marker-end="url(#m)"/>
+<rect x="470" y="822" width="420" height="70" rx="12" fill="#F0FDFA" stroke="#0F766E" stroke-width="1.6"/>
+<text x="486" y="847" font-family="Menlo,'SF Mono',Consolas,monospace" font-size="15" fill="#0F766E" font-weight="700" text-anchor="start">publish</text>
+<text x="486" y="867" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="12" fill="#0F172A" font-weight="400" text-anchor="start">잠금 → 게시 포인터 교체 → 이력</text>
+<text x="486" y="883" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="11.5" fill="#475569" font-weight="400" text-anchor="start">한 트랜잭션 — 실패하면 이전 게시본 유지</text>
+<rect x="908" y="836" width="57.2" height="20" rx="10" fill="#6D28D9" stroke="#6D28D9" stroke-width="0"/>
+<text x="936.6" y="850" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="11" fill="#FFFFFF" font-weight="700" text-anchor="middle">kss 쓰기</text>
+<text x="452" y="862" font-family="Menlo,'SF Mono',Consolas,monospace" font-size="12" fill="#B45309" font-weight="600" text-anchor="end">kss_runs.status: published</text>
+<path d="M680.0,796 L680.0,820" fill="none" stroke="#0F766E" stroke-width="1.8" marker-end="url(#m)"/>
+<rect x="470" y="918" width="420" height="70" rx="12" fill="#F0FDFA" stroke="#0F766E" stroke-width="1.6"/>
+<text x="486" y="943" font-family="Menlo,'SF Mono',Consolas,monospace" font-size="15" fill="#0F766E" font-weight="700" text-anchor="start">cross</text>
+<text x="486" y="963" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="12" fill="#0F172A" font-weight="400" text-anchor="start">alerts 신호(d = T)와 같은 날 점수를 연결</text>
+<text x="486" y="979" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="11.5" fill="#475569" font-weight="400" text-anchor="start">available_at_signal · 주봉 품질 표지</text>
+<rect x="908" y="932" width="50.0" height="20" rx="10" fill="#475569" stroke="#475569" stroke-width="0"/>
+<text x="933.0" y="946" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="11" fill="#FFFFFF" font-weight="700" text-anchor="middle">상위 읽기</text>
+<rect x="966.0" y="932" width="57.2" height="20" rx="10" fill="#6D28D9" stroke="#6D28D9" stroke-width="0"/>
+<text x="994.6" y="946" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="11" fill="#FFFFFF" font-weight="700" text-anchor="middle">kss 쓰기</text>
+<path d="M680.0,892 L680.0,916" fill="none" stroke="#0F766E" stroke-width="1.8" marker-end="url(#m)"/>
+<path d="M680.0,988 L680.0,1012" fill="none" stroke="#0F766E" stroke-width="1.8" marker-end="url(#m)"/>
+<rect x="620.0" y="1014" width="120" height="34" rx="17" fill="#FFFFFF" stroke="#0F766E" stroke-width="1.5"/>
+<text x="680.0" y="1036" font-family="Menlo,'SF Mono',Consolas,monospace" font-size="12" fill="#0F766E" font-weight="700" text-anchor="middle">END</text>
+<rect x="1040" y="438" width="400" height="70" rx="12" fill="#FFFBEB" stroke="#B45309" stroke-width="1.6" stroke-dasharray="6 4"/>
+<text x="1056" y="463" font-family="Menlo,'SF Mono',Consolas,monospace" font-size="15" fill="#B45309" font-weight="700" text-anchor="start">wait</text>
+<text x="1056" y="483" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="12" fill="#0F172A" font-weight="400" text-anchor="start">상위 수집 미완 — 게시하지 않는다</text>
+<text x="1056" y="499" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="11.5" fill="#475569" font-weight="400" text-anchor="start">07:17 복구 잡의 대상 (M4)</text>
+<text x="1056" y="530" font-family="Menlo,'SF Mono',Consolas,monospace" font-size="12" fill="#B45309" font-weight="600" text-anchor="start">kss_runs.status: waiting_upstream</text>
+<path d="M890,392 L1240,392 L1240,436" fill="none" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#m)"/>
+<text x="1250" y="386" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="12" fill="#B45309" font-weight="700" text-anchor="start">커버리지 미달</text>
+<text x="690.0" y="429" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="12" fill="#0F766E" font-weight="700" text-anchor="start">통과</text>
+<path d="M1240,542 L1240,1031 L742.0,1031" fill="none" stroke="#B45309" stroke-width="1.8" stroke-dasharray="6 4" marker-end="url(#m)"/>
+<rect x="40" y="1078" width="700" height="150" rx="12" fill="#F8FAFC" stroke="#E2E8F0" stroke-width="1"/>
+<text x="58" y="1108" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="14" fill="#0F172A" font-weight="700" text-anchor="start">상태(RunState) — 요약만</text>
+<text x="58" y="1132" font-family="Menlo,'SF Mono',Consolas,monospace" font-size="12" fill="#475569" font-weight="400" text-anchor="start">profile · requested_t · trigger · dry_run</text>
+<text x="58" y="1152" font-family="Menlo,'SF Mono',Consolas,monospace" font-size="12" fill="#475569" font-weight="400" text-anchor="start">t · run_id · gate_ok · status · stats</text>
+<text x="390" y="1108" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="14" fill="#0F172A" font-weight="700" text-anchor="start">실행 문맥(RunContext) — 노드에 묶임</text>
+<text x="390" y="1132" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="12" fill="#475569" font-weight="400" text-anchor="start">상위·kss 연결 · 규칙</text>
+<text x="390" y="1152" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="12" fill="#475569" font-weight="400" text-anchor="start">스냅샷(일봉 108만 행) · 계산 결과</text>
+<text x="390" y="1172" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="12" fill="#475569" font-weight="400" text-anchor="start">→ 체크포인트가 대량 데이터를 복제하지 않음</text>
+<text x="58" y="1208" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="12" fill="#6D28D9" font-weight="600" text-anchor="start">dry_run: create_run · persist · publish · cross는 kss에 쓰지 않는다</text>
+<rect x="760" y="1078" width="700" height="150" rx="12" fill="#FEF2F2" stroke="#FCA5A5" stroke-width="1"/>
+<text x="778" y="1108" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="14" fill="#B91C1C" font-weight="700" text-anchor="start">실패 처리</text>
+<text x="778" y="1134" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="12.5" fill="#0F172A" font-weight="400" text-anchor="start">어느 노드에서든 예외 → run.py가 kss_runs를 failed로 기록,</text>
+<text x="778" y="1155" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="12.5" fill="#0F172A" font-weight="400" text-anchor="start">종료 코드 ≠ 0.</text>
+<text x="778" y="1176" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="12.5" fill="#0F172A" font-weight="400" text-anchor="start">게시 포인터는 publish 트랜잭션 안에서만 바뀐다 →</text>
+<text x="778" y="1197" font-family="'Apple SD Gothic Neo','Noto Sans KR','Malgun Gothic',sans-serif" font-size="12.5" fill="#0F172A" font-weight="400" text-anchor="start">이전 게시본이 그대로 보인다 (실DB 테스트로 확인).</text>
+</svg>

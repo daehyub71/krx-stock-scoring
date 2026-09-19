@@ -11,6 +11,7 @@
 from __future__ import annotations
 
 import os
+import urllib.parse
 from pathlib import Path
 
 import psycopg
@@ -56,6 +57,21 @@ def connect_upstream(env: dict[str, str] | None = None) -> psycopg.Connection[tu
 
 
 def connect_kss(env: dict[str, str] | None = None) -> psycopg.Connection[tuple[object, ...]]:
-    """kss 전용 DB — 배치 쓰기."""
+    """kss 전용 DB — 소유자(postgres) 연결. 스키마 적용·관리 전용."""
     url = require(env or load_env(), "KSS_DATABASE_URL")
+    return psycopg.connect(url, prepare_threshold=None)
+
+
+def connect_kss_batch(env: dict[str, str] | None = None) -> psycopg.Connection[tuple[object, ...]]:
+    """kss 전용 DB — 배치 롤(`kss_batch`). 필요한 쓰기만 가능하다 (SPEC N11).
+
+    Session pooler는 사용자명을 `<롤>.<프로젝트 ref>`로 받으므로 소유자 URI에서 호스트만 빌린다.
+    """
+    env = env or load_env()
+    base = urllib.parse.urlsplit(require(env, "KSS_DATABASE_URL"))
+    ref = (base.username or "").split(".", 1)[1] if "." in (base.username or "") else ""
+    password = urllib.parse.quote(require(env, "KSS_BATCH_PASSWORD"), safe="")
+    user = f"kss_batch.{ref}" if ref else "kss_batch"
+    netloc = f"{user}:{password}@{base.hostname}:{base.port or 5432}"
+    url = urllib.parse.urlunsplit((base.scheme, netloc, base.path, "", ""))
     return psycopg.connect(url, prepare_threshold=None)

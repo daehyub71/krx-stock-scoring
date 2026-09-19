@@ -85,6 +85,18 @@ class Rules:
         """축 만점."""
         return self.axes[axis]
 
+    def item(self, item_id: str) -> Item:
+        """항목 하나 (없으면 KeyError)."""
+        for i in self.items:
+            if i.id == item_id:
+                return i
+        raise KeyError(item_id)
+
+    def section(self, name: str) -> dict[str, Any]:
+        """규칙 파일의 최상위 표 하나 (universe · technical · screen …)."""
+        value = self.raw.get(name, {})
+        return dict(value) if isinstance(value, dict) else {}
+
 
 def _items(raw: dict[str, Any]) -> tuple[Item, ...]:
     items = []

@@ -1,0 +1,9 @@
+{
+  "t": "2026-09-18",
+  "drifted": [
+    "001000",
+    "001290"
+  ],
+  "source": "ksc_bars:D:2025-02-03..2026-09-18",
+  "exported_from": "ksc_bars (public market data)"
+}

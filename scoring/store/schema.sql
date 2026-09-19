@@ -161,10 +161,33 @@ create table if not exists kss_publication_history (
   reason       text not null
 );
 
+-- ───────────────────────── alerts 대조 ─────────────────────────
+-- signal.d = score.data_date 로 연결 (SPEC §8). M1은 기술 전용(partial_technical).
+-- available_at_signal: 점수 게시 시각 ≤ 신호 생성 시각 — 그때 실제로 볼 수 있었던 점수인가
+create table if not exists kss_signal_cross (
+  signal_data_date       date not null,
+  ticker                 text not null,
+  strategy               text not null,
+  score_run_id           uuid not null references kss_runs(run_id) on delete cascade,
+  comparison_mode        text not null,               -- partial_technical / same_data_date
+  signal_created_at      timestamptz,
+  score_published_at     timestamptz,
+  available_at_signal    boolean,
+  rank_no                integer,
+  suppressed             boolean,
+  score_status           text,
+  axis_points            numeric(6, 2),
+  passes_screen          boolean,
+  upstream_weekly_quality_unverified boolean not null default false,  -- 상위 W/M 저장 행 의존 전략
+  note                   text,
+  primary key (signal_data_date, ticker, strategy, score_run_id, comparison_mode),
+  constraint kss_signal_cross_mode check (comparison_mode in ('partial_technical', 'same_data_date'))
+);
+
 -- ───────────────────────── 권한 ─────────────────────────
 -- Supabase 기본 권한이 public 스키마 새 표를 anon·authenticated에 열어 둔다 → 표마다 회수한다.
 revoke all on kss_runs, kss_source_checks, kss_universe_snapshots, kss_scores,
-              kss_score_parts, kss_publications, kss_publication_history
+              kss_score_parts, kss_publications, kss_publication_history, kss_signal_cross
   from anon, authenticated;
 
 alter table kss_runs                enable row level security;
@@ -174,12 +197,13 @@ alter table kss_scores              enable row level security;
 alter table kss_score_parts         enable row level security;
 alter table kss_publications        enable row level security;
 alter table kss_publication_history enable row level security;
+alter table kss_signal_cross        enable row level security;
 
 -- kss_batch: 필요한 쓰기만. 삭제는 근거 보존 정리(parts)에만
 grant select, insert, update on kss_runs, kss_source_checks, kss_universe_snapshots,
                                kss_scores, kss_score_parts, kss_publications,
-                               kss_publication_history to kss_batch;
-grant delete on kss_score_parts, kss_publications to kss_batch;
+                               kss_publication_history, kss_signal_cross to kss_batch;
+grant delete on kss_score_parts, kss_publications, kss_signal_cross to kss_batch;
 
 drop policy if exists kss_runs_batch on kss_runs;
 drop policy if exists kss_source_checks_batch on kss_source_checks;
@@ -188,6 +212,7 @@ drop policy if exists kss_scores_batch on kss_scores;
 drop policy if exists kss_parts_batch on kss_score_parts;
 drop policy if exists kss_publications_batch on kss_publications;
 drop policy if exists kss_pub_history_batch on kss_publication_history;
+drop policy if exists kss_cross_batch on kss_signal_cross;
 create policy kss_runs_batch          on kss_runs                for all to kss_batch using (true) with check (true);
 create policy kss_source_checks_batch on kss_source_checks       for all to kss_batch using (true) with check (true);
 create policy kss_universe_batch      on kss_universe_snapshots  for all to kss_batch using (true) with check (true);
@@ -195,16 +220,18 @@ create policy kss_scores_batch        on kss_scores              for all to kss_
 create policy kss_parts_batch         on kss_score_parts         for all to kss_batch using (true) with check (true);
 create policy kss_publications_batch  on kss_publications        for all to kss_batch using (true) with check (true);
 create policy kss_pub_history_batch   on kss_publication_history for all to kss_batch using (true) with check (true);
+create policy kss_cross_batch         on kss_signal_cross        for all to kss_batch using (true) with check (true);
 
 -- kss_reader: SELECT만, 그리고 게시된 run의 행만 (SPEC N11)
 grant select on kss_runs, kss_source_checks, kss_scores, kss_score_parts,
-                kss_publications to kss_reader;
+                kss_publications, kss_signal_cross to kss_reader;
 
 drop policy if exists kss_publications_reader on kss_publications;
 drop policy if exists kss_runs_reader on kss_runs;
 drop policy if exists kss_source_checks_reader on kss_source_checks;
 drop policy if exists kss_scores_reader on kss_scores;
 drop policy if exists kss_parts_reader on kss_score_parts;
+drop policy if exists kss_cross_reader on kss_signal_cross;
 create policy kss_publications_reader on kss_publications for select to kss_reader using (true);
 create policy kss_runs_reader on kss_runs for select to kss_reader
   using (exists (select 1 from kss_publications p where p.run_id = kss_runs.run_id));
@@ -214,3 +241,5 @@ create policy kss_scores_reader on kss_scores for select to kss_reader
   using (exists (select 1 from kss_publications p where p.run_id = kss_scores.run_id));
 create policy kss_parts_reader on kss_score_parts for select to kss_reader
   using (exists (select 1 from kss_publications p where p.run_id = kss_score_parts.run_id));
+create policy kss_cross_reader on kss_signal_cross for select to kss_reader
+  using (exists (select 1 from kss_publications p where p.run_id = kss_signal_cross.score_run_id));
