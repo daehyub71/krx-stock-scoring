@@ -9,7 +9,7 @@
 
 | 마일스톤 | 진도 | % | 태스크 | 상태 |
 |----------|------|---|--------|------|
-| **M0 선행 실측·계약·뼈대** | `████████░░` | 80% | 8/10 | 🔄 |
+| **M0 선행 실측·계약·뼈대** | `█████████░` | 90% | 9/10 | 🔄 사용자 확인 대기 |
 | M1 유니버스·기술·최소 저장 | `░░░░░░░░░░` | 0% | 0/8 | 🔜 |
 | M2 기본·수급·규칙 확정 | `░░░░░░░░░░` | 0% | 0/7 | 🔜 |
 | M3 공시·사전·뉴스 보조 | `░░░░░░░░░░` | 0% | 0/6 | 🔜 |
@@ -17,7 +17,7 @@
 | M5 웹·접근 보호 | `░░░░░░░░░░` | 0% | 0/6 | 🔜 |
 | M6 점수 검증·출시 판정 | `░░░░░░░░░░` | 0% | 0/4 | 🔜 |
 | M7 MCP·Skill | `░░░░░░░░░░` | 0% | 0/2 | 🔜 |
-| **전체** | `██░░░░░░░░` | **16%** | **8/50** | 🔄 M0 |
+| **전체** | `██░░░░░░░░` | **18%** | **9/50** | 🔄 M0 |
 
 범례: 🔜 대기 · 🔄 진행중 · ✅완료일
 
@@ -25,7 +25,7 @@
 
 | 시점 | 항목 | 상태 |
 |------|------|------|
-| M0 | 깃허브 리포 `daehyub71/krx-stock-scoring` 생성 (public/private) | ⏳ |
+| ~~M0~~ | ~~깃허브 리포 생성~~ — `daehyub71/krx-stock-scoring` (**public**) | ✅ 2026-09-19 |
 | ~~M0~~ | ~~kss 전용 Supabase~~ — 전용 프로젝트(싱가포르, 19 MB) Session pooler 접속·스키마 적용 | ✅ 2026-09-19 |
 | M0 | 의존성 승인 (psycopg·certifi·langgraph, dev: pytest·ruff·mypy) · 규칙 파일 TOML 채택 | ⏳ (langgraph는 2026-09-19 채택) |
 | M0 | 공유 DB 513 MB(한도 초과) — Supabase 대시보드에서 요금제·초과 시 동작 확인 | ⏳ scoring 범위 밖, 보고만 |
@@ -41,8 +41,7 @@
 - [x] 추가 실측 — charts 실행 시각 34건, 수급 NULL 항등식, DART list.json 표본 → `docs/m0/M0_REPORT.md` — 2026-09-19
 - [x] SPEC v2.1 → v2.2 (D1 전용 프로젝트, 수급 derived_zero, D2 M4 연결) — 2026-09-19
 - [x] PLAN v0.1 — 2026-09-19
-- [ ] 리포·venv·`pyproject.toml`(ruff·mypy strict·pytest)·`.gitignore`·CI(`ci.yml`) — 첫 푸시에서 CI 녹색
-  - 2026-09-19 로컬 완료: `git init`(커밋 전)·venv(3.11)·의존성 설치·`.env`/`.env.example`·`ci.yml`. **남은 것: 깃허브 리포 생성 → 첫 푸시 → CI 녹색**
+- [x] 리포·venv·`pyproject.toml`(ruff·mypy strict·pytest)·`.gitignore`·CI(`ci.yml`) — 2026-09-19 공개 리포 첫 푸시(8a0fc95), **CI 녹색 20초**. 푸시 전 보안 점검: 비밀값 대조 0건(작업 트리·커밋 이력), 공유 DB 원본 조회 출력은 `.gitignore`로 제외, 액션 SHA 고정, 권한 `contents: read`
 - [x] kss 전용 Supabase: `store/schema.sql`(M1 객체 7개)·RLS·anon 정책 없음·`kss_batch`/`kss_reader` 롤·`scripts/apply_schema.py` — 2026-09-19 적용. 롤 비밀번호는 무작위 생성해 `.env`에만. 롤 로그인 실측: batch 쓰기 ✅·bus-mate 표 거부 ✅ / reader 조회 ✅·쓰기 거부 ✅·비게시 표 거부 ✅
 - [x] `tests/test_schema.py` — 파일 수준 14개 + 실DB(`-m db`: RLS 전부 켜짐·anon/authenticated 정책·권한 0) 통과 — 2026-09-19. 저장 열 = 읽기 열 왕복은 writer가 생기는 M1에서
 - [x] `rules/v0.toml` + `scoring/rules.py`(로드·정규 해시) — 테스트 12개: 항목 만점 17개·공통 90·축 35/35/7/13·뉴스 별도·신용 비활성·도달 가능 최대·해시 안정성 — 2026-09-19
@@ -116,6 +115,7 @@
 
 | 일자 | 현상 | 원인 | 조치 |
 |---|---|---|---|
+| 2026-09-19 | CI 경고: 고정한 checkout v4·setup-python v5가 Node 20 기반(지원 종료) | 액션 메이저 버전이 낡음 | 현재는 Node 24로 강제 실행돼 통과. M1 중 최신 메이저 SHA로 올린다 |
 | 2026-09-19 | kss DB(bus-mate)에 기존 앱 표 7개 공존 | 사용자가 기존 프로젝트를 전용으로 지정 | 접두어 `kss_`로 충돌 없음, kss 표는 anon 회수·RLS. bus-mate 표는 kss_batch도 접근 불가 확인 |
 | 2026-09-19 | 상위 DB 주소가 트랜잭션 풀러(6543) | prepared statement 불가 | `config.connect_upstream`에 `prepare_threshold=None` |
 | 2026-09-19 | M0를 `ksv_reader`로 할 수 없음 | 그 롤은 `ksv_*`만 SELECT | 배치 자격증명 + `default_transaction_read_only=on` 세션으로 실측(서버가 쓰기 거부). 상위 전용 SELECT 롤은 D2 범위 |
