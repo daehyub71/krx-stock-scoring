@@ -1,0 +1,34 @@
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+extend-exclude = ["scripts/draw_architecture.py"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "N"]
+
+# M0 실측 SQL은 기록 그대로 둔다 (docs/m0/M0_REPORT.md와 대응)
+[tool.ruff.lint.per-file-ignores]
+"scripts/m0_probe.py" = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["scoring"]
+known-third-party = ["psycopg", "langgraph", "pytest"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unreachable = true
+files = ["scoring", "scripts", "tests"]
+exclude = ["scripts/draw_architecture\\.py"]
+
+[[tool.mypy.overrides]]
+module = ["langgraph.*", "langchain_core.*"]
+ignore_missing_imports = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+markers = [
+  "db: 실DB 연결이 필요한 테스트 (CI 기본 제외)",
+  "live: 외부 API 실호출 (CI 기본 제외)",
+]
+addopts = "-m 'not db and not live'"

@@ -1,0 +1,20 @@
+# 비밀값 — 절대 커밋하지 않는다
+.env
+.env.*
+!.env.example
+
+venv/
+__pycache__/
+*.pyc
+.mypy_cache/
+.pytest_cache/
+.ruff_cache/
+.DS_Store
+
+# 아카이브·실행 산출물은 리포에 두지 않는다 (SPEC §7.4)
+archive_out/
+*.parquet
+
+# 실DB 원본 조회 출력 — 공유 DB 전체 목록(다른 프로젝트 표·롤·anon 노출 표)이 담겨 공개 리포에 두지 않는다.
+# 요약은 docs/m0/M0_REPORT.md
+docs/m0/*.txt

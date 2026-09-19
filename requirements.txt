@@ -1,0 +1,10 @@
+# krx-stock-scoring — 런타임 의존성 (PLAN §7)
+
+# 두 DB 연결 — 상위 읽기(세션 READ ONLY) · kss 쓰기. REST 1000행 절단을 피해 SQL로 일괄 조회한다
+psycopg[binary]>=3.2
+
+# 배치 그래프 층 (SPEC §10 v2.3) — scoring/graph.py만 import한다. verify와 같은 범위
+langgraph>=1.2,<2
+
+# macOS 파이썬 CA 번들 부재·TLS 인터셉션 대응 (verify 2026-09-01 실측)
+certifi>=2024.0
