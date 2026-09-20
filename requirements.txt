@@ -8,3 +8,6 @@ langgraph>=1.2,<2
 
 # macOS 파이썬 CA 번들 부재·TLS 인터셉션 대응 (verify 2026-09-01 실측)
 certifi>=2024.0
+
+# PER·PBR 시장별 일괄 조회 (M2). charts와 같은 1.2.x — import 시 KRX_ID/KRX_PW로 로그인한다
+pykrx>=1.2.8,<1.3

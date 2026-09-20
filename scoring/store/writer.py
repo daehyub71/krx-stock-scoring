@@ -96,7 +96,8 @@ def write_results(
     ]
     scores = [
         (run_id, r.entry.meta.ticker, data_date, profile, r.entry.meta.name, r.entry.meta.market,
-         r.entry.meta.sector, r.row.status, r.row.raw_total, r.row.total, r.row.estimated_total,
+         r.entry.meta.sector, r.row.status, r.row.profile_max, r.row.raw_total, r.row.total,
+         r.row.estimated_total,
          r.row.grade, r.row.coverage, _json(r.row.axis), r.row.availability_signature,
          r.row.rank_eligible, list(r.row.risk_flags), r.row.passes_screen)
         for r in results
@@ -115,9 +116,9 @@ def write_results(
         for chunk in _chunks(scores):
             cur.executemany(
                 "insert into kss_scores (run_id, ticker, data_date, profile, name, market, sector, "
-                "status, raw_total, total, estimated_total, grade, coverage, axis, "
+                "status, profile_max, raw_total, total, estimated_total, grade, coverage, axis, "
                 "availability_signature, rank_eligible, risk_flags, passes_screen) "
-                "values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)",
+                "values (" + ", ".join(["%s"] * 19) + ")",
                 chunk)
             conn.commit()
         for chunk in _chunks(parts):
@@ -127,6 +128,20 @@ def write_results(
                 "values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)", chunk)
             conn.commit()
     return {"universe": len(universe), "scores": len(scores), "parts": len(parts)}
+
+
+def write_sector_stats(
+    conn: Conn, run_id: UUID, rows: Sequence[tuple[str, str, str, float, int]]
+) -> int:
+    """업종·시장 중앙값 (우리가 계산한 PER·PBR 기준)."""
+    with conn.cursor() as cur:
+        cur.executemany(
+            "insert into kss_sector_stats (run_id, market, sector, metric, median, samples) "
+            "values (%s, %s, %s, %s, %s, %s) on conflict do nothing",
+            [(run_id, m, s, k, med, n) for m, s, k, med, n in rows],
+        )
+    conn.commit()
+    return len(rows)
 
 
 def count_rows(conn: Conn, run_id: UUID) -> dict[str, int]:

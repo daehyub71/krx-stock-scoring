@@ -37,7 +37,7 @@ def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(prog="scoring.run")
     sub = ap.add_subparsers(dest="cmd", required=True)
     sc = sub.add_parser("score", help="점수 계산·게시")
-    sc.add_argument("--profile", default="technical", choices=["technical"])
+    sc.add_argument("--profile", default="partial", choices=["technical", "partial"])
     sc.add_argument("--date", default=None, help="평가 거래일 T (기본: 마지막 거래일)")
     sc.add_argument("--dry-run", action="store_true", help="계산만 — kss에 쓰지 않는다")
     sc.add_argument("--trigger", default="manual")

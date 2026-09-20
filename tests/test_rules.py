@@ -20,17 +20,18 @@ EXPECTED_ITEM_MAX = {
     "tech.volume": 6,
     "tech.volume_profile": 7,
     "tech.rsi_macd": 5,
-    "fund.per": 7,
-    "fund.pbr": 6,
+    "fund.per": 6,
+    "fund.pbr": 5,
     "fund.op_margin": 7,
-    "fund.growth": 7,
+    "fund.growth": 6,
+    "fund.div": 4,
     "fund.roe": 5,
     "fund.debt_ratio": 3,
     "disc.dart": 7,
     "flow.foreign": 6,
     "flow.inst": 5,
     "flow.shorting": 2,
-    "news.naver": 8,
+    "news.naver": 9,
     "flow.credit": 2,
 }
 
@@ -44,28 +45,35 @@ def test_rules_item_max_matches_spec(rules: Rules) -> None:
     assert {i.id: i.max for i in rules.items} == EXPECTED_ITEM_MAX
 
 
-def test_rules_concept_item_count_is_17(rules: Rules) -> None:
-    # 공통 15 + 뉴스 별도 1 + 신용 비활성 1 (SPEC §4.1)
-    assert len(rules.items) == 17
-    assert len(rules.common_items) == 15
+def test_rules_concept_item_count_is_18(rules: Rules) -> None:
+    # v2.7 — 공통 17(뉴스·배당 포함) + 신용 비활성 1 (SPEC §4.1)
+    assert len(rules.items) == 18
+    assert len(rules.common_items) == 17
 
 
-def test_rules_common_max_is_90(rules: Rules) -> None:
-    assert rules.common_max == 90
+def test_rules_common_max_is_100(rules: Rules) -> None:
+    # 기술 35 + 기본 36 + 공시 7 + 수급 13 + 뉴스 9 = 100 (v2.7)
+    assert rules.common_max == 100
 
 
 def test_rules_axis_max(rules: Rules) -> None:
     assert rules.axis_max("technical") == 35
-    assert rules.axis_max("fundamental") == 35
+    assert rules.axis_max("fundamental") == 36
     assert rules.axis_max("disclosure") == 7
     assert rules.axis_max("flow") == 13
+    assert rules.axis_max("news") == 9
 
 
-def test_rules_news_separate_and_credit_inactive(rules: Rules) -> None:
+def test_rules_news_is_common_and_can_be_negative(rules: Rules) -> None:
     by_id = {i.id: i for i in rules.items}
-    assert by_id["news.naver"].role == "separate"
+    assert by_id["news.naver"].role == "common"       # v2.6 — 공통 점수로 편입
+    assert by_id["news.naver"].min_points == -9
+    assert "news.naver" in {i.id for i in rules.common_items}
+
+
+def test_rules_credit_inactive(rules: Rules) -> None:
+    by_id = {i.id: i for i in rules.items}
     assert by_id["flow.credit"].role == "inactive"
-    assert "news.naver" not in {i.id for i in rules.common_items}
     assert "flow.credit" not in {i.id for i in rules.common_items}
 
 
@@ -81,6 +89,11 @@ def test_rules_tier_reachable_max_equals_item_max(rules: Rules) -> None:
         if item.pending:
             continue
         assert item.reachable_max() == item.max, item.id
+
+
+def test_rules_only_news_is_pending(rules: Rules) -> None:
+    # M2에서 나머지 보완값을 확정했다 — 뉴스만 사전 검증(D7) 전까지 미확정
+    assert {i.id for i in rules.items if i.pending} == {"news.naver"}
 
 
 def test_rules_thresholds(rules: Rules) -> None:
@@ -106,7 +119,7 @@ def test_rules_hash_is_sha256_hex(rules: Rules) -> None:
 
 
 def test_rules_rejects_axis_sum_mismatch(tmp_path: Path) -> None:
-    bad = RULES_V0.read_text(encoding="utf-8").replace("common_max = 90", "common_max = 91")
+    bad = RULES_V0.read_text(encoding="utf-8").replace("common_max = 100", "common_max = 99")
     p = tmp_path / "bad.toml"
     p.write_text(bad, encoding="utf-8")
     with pytest.raises(RulesError):

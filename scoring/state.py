@@ -14,7 +14,7 @@ from uuid import UUID
 
 import psycopg
 
-from scoring.compute import TickerResult
+from scoring.compute import Fundamentals, TickerResult
 from scoring.rules import Rules
 from scoring.sources.upstream import CalendarInfo, Snapshot
 
@@ -45,6 +45,8 @@ class RunContext:
     calendar: CalendarInfo | None = None
     snapshot: Snapshot | None = None
     results: list[TickerResult] | None = None
+    fundamentals: Fundamentals | None = None
+    dart_calls: int = 0
     run_id: UUID | None = None
     published_at: datetime | None = None
     timings: dict[str, float] = field(default_factory=dict)

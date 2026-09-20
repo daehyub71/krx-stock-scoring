@@ -15,6 +15,7 @@ from typing import Any
 import psycopg
 
 from scoring.calendar import Calendar, build_calendar, resolve_t
+from scoring.domain.flow import FlowDay, ShortDay
 from scoring.models import DailyBar, TickerMeta
 
 Conn = psycopg.Connection[tuple[Any, ...]]
@@ -40,7 +41,10 @@ class Snapshot:
     window_start: date
     tickers: tuple[TickerMeta, ...]
     bars: dict[str, tuple[DailyBar, ...]]
-    drifted: frozenset[str]
+    drifted: frozenset[str]          # 기술 계산을 보류할 종목 (재백필 실패가 있을 때만 채운다)
+    drift_checked: str
+    drift_listed: int                # 상위가 그날 재백필한 종목 수 (참고)
+    drift_failed: int
     upstream_meta: dict[str, Any]
     source_id: str
     rows: int
@@ -126,8 +130,12 @@ def load_snapshot(
             if tickers_filter is None or t in tickers_filter
         )
     meta = load_meta(conn)
+    # drift.drifted는 「그날 재백필한 종목」이다 — 실패가 없으면 이미 고쳐졌으므로 보류하지 않는다.
+    # 실패가 있으면 상위가 개수만 남겨 대상을 특정할 수 없어, 그 실행에서는 목록 전체를 보류한다.
     drift = meta.get("drift") or {}
-    drifted = frozenset(str(x) for x in (drift.get("drifted") or []))
+    drift_failed = int(drift.get("failed") or 0)
+    listed = frozenset(str(x) for x in (drift.get("drifted") or []))
+    drifted = listed if drift_failed else frozenset()
 
     wanted = [t.ticker for t in tickers]
     bars: dict[str, list[DailyBar]] = {}
@@ -150,11 +158,45 @@ def load_snapshot(
         tickers=tickers,
         bars={k: tuple(v) for k, v in bars.items()},
         drifted=drifted,
+        drift_checked=str(drift.get("checked") or ""),
+        drift_listed=len(listed),
+        drift_failed=drift_failed,
         upstream_meta=meta,
         source_id=f"ksc_bars:D:{start.isoformat()}..{info.t.isoformat()}",
         rows=rows,
         load_seconds=round(time.monotonic() - started, 2),
     )
+
+
+def load_flows(conn: Conn, start: date, t: date) -> dict[str, list[FlowDay]]:
+    """종목별 투자자 순매수 (`ksc_investor_flows`) — 창 구간만."""
+    out: dict[str, list[FlowDay]] = {}
+    with conn.cursor() as cur:
+        cur.execute(
+            "select ticker, d, inst_net, foreign_net, foreign_etc_net, indiv_net, corp_etc_net "
+            "from ksc_investor_flows where d between %s and %s order by ticker, d",
+            (start, t),
+        )
+        for tk, d, inst, fgn, fgn_etc, indiv, corp in cur.fetchall():
+            out.setdefault(str(tk), []).append(
+                FlowDay(d=d, inst=inst, foreign=fgn, foreign_etc=fgn_etc, indiv=indiv,
+                        corp_etc=corp))
+    return out
+
+
+def load_shorting(conn: Conn, start: date, t: date) -> dict[str, list[ShortDay]]:
+    """종목별 공매도 거래 비중 (`ksc_shorting`) — 창 구간만."""
+    out: dict[str, list[ShortDay]] = {}
+    with conn.cursor() as cur:
+        cur.execute(
+            "select ticker, d, short_vol, buy_vol, ratio from ksc_shorting "
+            "where d between %s and %s order by ticker, d",
+            (start, t),
+        )
+        for tk, d, short_vol, buy_vol, ratio in cur.fetchall():
+            out.setdefault(str(tk), []).append(
+                ShortDay(d=d, short_vol=short_vol, buy_vol=buy_vol, ratio=float(ratio)))
+    return out
 
 
 def load_signals(conn: Conn, d: date) -> list[Signal]:

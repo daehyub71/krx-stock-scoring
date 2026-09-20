@@ -19,6 +19,7 @@ TABLES = re.findall(r"create table if not exists (\w+)", SQL)
 M1_TABLES = {
     "kss_runs", "kss_source_checks", "kss_universe_snapshots", "kss_scores",
     "kss_score_parts", "kss_publications", "kss_publication_history", "kss_signal_cross",
+    "kss_sector_stats",
 }
 
 
@@ -62,7 +63,7 @@ def test_schema_reader_is_select_only() -> None:
 
 def test_schema_reader_sees_only_published_runs() -> None:
     for table in ("kss_runs", "kss_source_checks", "kss_scores", "kss_score_parts",
-                  "kss_signal_cross"):
+                  "kss_signal_cross", "kss_sector_stats"):
         pat = (
             rf"on {table} for select to kss_reader\s+"
             r"using \(exists \(select 1 from kss_publications"

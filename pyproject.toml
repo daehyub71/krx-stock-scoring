@@ -22,7 +22,7 @@ files = ["scoring", "scripts", "tests"]
 exclude = ["scripts/draw_architecture\\.py"]
 
 [[tool.mypy.overrides]]
-module = ["langgraph.*", "langchain_core.*"]
+module = ["langgraph.*", "langchain_core.*", "pykrx.*"]
 ignore_missing_imports = true
 
 [tool.pytest.ini_options]

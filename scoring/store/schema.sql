@@ -93,7 +93,8 @@ create table if not exists kss_scores (
   market                 text not null,
   sector                 text not null default '',
   status                 text not null,
-  raw_total              numeric(6, 2),            -- 공통 원점수 /90
+  profile_max            numeric(6, 2),            -- 프로필 만점 (기술 35 · 기술+기본 71 · 공통 100)
+  raw_total              numeric(6, 2),            -- 관측 항목 점수의 합 (v2.8: 모든 상태)
   total                  numeric(6, 2),            -- 완전 관측일 때만 (100 환산)
   estimated_total        numeric(6, 2),            -- 부분 관측 추정치 (provisional)
   grade                  text,
@@ -110,9 +111,10 @@ create table if not exists kss_scores (
   constraint kss_scores_total_only_scored check (total is null or status = 'scored'),
   constraint kss_scores_grade_only_scored check (grade is null or status = 'scored'),
   constraint kss_scores_grade_values check (grade is null or grade in ('A', 'B', 'C', 'D')),
+  -- v2.7 — 총점 100점 척도(환산 없음). 뉴스(−9~+9) 때문에 음수 총점이 가능하다
   constraint kss_scores_ranges check (
-    (total is null or total between 0 and 100) and
-    (estimated_total is null or estimated_total between 0 and 100) and
+    (total is null or total between -100 and 100) and
+    (estimated_total is null or estimated_total between -100 and 100) and
     (coverage is null or coverage between 0 and 1))
 );
 create index if not exists kss_scores_ticker on kss_scores (ticker, data_date desc);
@@ -137,7 +139,8 @@ create table if not exists kss_score_parts (
   constraint kss_parts_state check (state in ('observed', 'no_event', 'adverse_defined', 'missing', 'not_applicable')),
   constraint kss_parts_missing_null check ((state = 'missing') = (points is null) or state = 'not_applicable'),
   constraint kss_parts_reason_only_missing check (missing_reason is null or state = 'missing'),
-  constraint kss_parts_points_range check (points is null or points between -1 and max)
+  -- 뉴스 항목만 음수를 낸다 (−max ~ max)
+  constraint kss_parts_points_range check (points is null or points between -max and max)
 );
 
 -- ───────────────────────── 게시 ─────────────────────────
@@ -159,6 +162,30 @@ create table if not exists kss_publication_history (
   new_run_id   uuid not null,
   changed_at   timestamptz not null default now(),
   reason       text not null
+);
+
+-- ───────────────────────── 기존 DB 이행 (v2.7~v2.8) ─────────────────────────
+alter table kss_scores add column if not exists profile_max numeric(6, 2);
+-- `create table if not exists`는 이미 있는 표의 제약을 바꾸지 않는다 → 명시적으로 다시 건다.
+alter table kss_scores drop constraint if exists kss_scores_ranges;
+alter table kss_scores add constraint kss_scores_ranges check (
+  (total is null or total between -100 and 100) and
+  (estimated_total is null or estimated_total between -100 and 100) and
+  (coverage is null or coverage between 0 and 1));
+alter table kss_score_parts drop constraint if exists kss_parts_points_range;
+alter table kss_score_parts add constraint kss_parts_points_range check (
+  points is null or points between -max and max);
+
+-- 업종·시장 중앙값 (M2) — 우리가 계산한 PER·PBR의 유효 양수 표본 중앙값
+create table if not exists kss_sector_stats (
+  run_id    uuid not null references kss_runs(run_id) on delete cascade,
+  market    text not null,
+  sector    text not null,
+  metric    text not null,                 -- per / pbr
+  median    numeric(12, 4) not null,
+  samples   integer not null,
+  primary key (run_id, market, sector, metric),
+  constraint kss_sector_stats_metric check (metric in ('per', 'pbr'))
 );
 
 -- ───────────────────────── alerts 대조 ─────────────────────────
@@ -187,7 +214,8 @@ create table if not exists kss_signal_cross (
 -- ───────────────────────── 권한 ─────────────────────────
 -- Supabase 기본 권한이 public 스키마 새 표를 anon·authenticated에 열어 둔다 → 표마다 회수한다.
 revoke all on kss_runs, kss_source_checks, kss_universe_snapshots, kss_scores,
-              kss_score_parts, kss_publications, kss_publication_history, kss_signal_cross
+              kss_score_parts, kss_publications, kss_publication_history, kss_signal_cross,
+              kss_sector_stats
   from anon, authenticated;
 
 alter table kss_runs                enable row level security;
@@ -198,11 +226,13 @@ alter table kss_score_parts         enable row level security;
 alter table kss_publications        enable row level security;
 alter table kss_publication_history enable row level security;
 alter table kss_signal_cross        enable row level security;
+alter table kss_sector_stats        enable row level security;
 
 -- kss_batch: 필요한 쓰기만. 삭제는 근거 보존 정리(parts)에만
 grant select, insert, update on kss_runs, kss_source_checks, kss_universe_snapshots,
                                kss_scores, kss_score_parts, kss_publications,
-                               kss_publication_history, kss_signal_cross to kss_batch;
+                               kss_publication_history, kss_signal_cross,
+                               kss_sector_stats to kss_batch;
 grant delete on kss_score_parts, kss_publications, kss_signal_cross to kss_batch;
 
 drop policy if exists kss_runs_batch on kss_runs;
@@ -213,6 +243,7 @@ drop policy if exists kss_parts_batch on kss_score_parts;
 drop policy if exists kss_publications_batch on kss_publications;
 drop policy if exists kss_pub_history_batch on kss_publication_history;
 drop policy if exists kss_cross_batch on kss_signal_cross;
+drop policy if exists kss_sector_stats_batch on kss_sector_stats;
 create policy kss_runs_batch          on kss_runs                for all to kss_batch using (true) with check (true);
 create policy kss_source_checks_batch on kss_source_checks       for all to kss_batch using (true) with check (true);
 create policy kss_universe_batch      on kss_universe_snapshots  for all to kss_batch using (true) with check (true);
@@ -221,10 +252,11 @@ create policy kss_parts_batch         on kss_score_parts         for all to kss_
 create policy kss_publications_batch  on kss_publications        for all to kss_batch using (true) with check (true);
 create policy kss_pub_history_batch   on kss_publication_history for all to kss_batch using (true) with check (true);
 create policy kss_cross_batch         on kss_signal_cross        for all to kss_batch using (true) with check (true);
+create policy kss_sector_stats_batch  on kss_sector_stats        for all to kss_batch using (true) with check (true);
 
 -- kss_reader: SELECT만, 그리고 게시된 run의 행만 (SPEC N11)
 grant select on kss_runs, kss_source_checks, kss_scores, kss_score_parts,
-                kss_publications, kss_signal_cross to kss_reader;
+                kss_publications, kss_signal_cross, kss_sector_stats to kss_reader;
 
 drop policy if exists kss_publications_reader on kss_publications;
 drop policy if exists kss_runs_reader on kss_runs;
@@ -232,6 +264,7 @@ drop policy if exists kss_source_checks_reader on kss_source_checks;
 drop policy if exists kss_scores_reader on kss_scores;
 drop policy if exists kss_parts_reader on kss_score_parts;
 drop policy if exists kss_cross_reader on kss_signal_cross;
+drop policy if exists kss_sector_stats_reader on kss_sector_stats;
 create policy kss_publications_reader on kss_publications for select to kss_reader using (true);
 create policy kss_runs_reader on kss_runs for select to kss_reader
   using (exists (select 1 from kss_publications p where p.run_id = kss_runs.run_id));
@@ -243,3 +276,5 @@ create policy kss_parts_reader on kss_score_parts for select to kss_reader
   using (exists (select 1 from kss_publications p where p.run_id = kss_score_parts.run_id));
 create policy kss_cross_reader on kss_signal_cross for select to kss_reader
   using (exists (select 1 from kss_publications p where p.run_id = kss_signal_cross.score_run_id));
+create policy kss_sector_stats_reader on kss_sector_stats for select to kss_reader
+  using (exists (select 1 from kss_publications p where p.run_id = kss_sector_stats.run_id));

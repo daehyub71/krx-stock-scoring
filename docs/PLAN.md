@@ -1,6 +1,6 @@
 # PLAN.md — krx-stock-scoring
 
-> **v0.3 (2026-09-19)** · 기준: `SPEC.md` **v2.3** · M0 실측: `docs/m0/M0_REPORT.md`
+> **v0.6 (2026-09-20)** · 기준: `SPEC.md` **v2.7** · M0 실측: `docs/m0/M0_REPORT.md`
 > SPEC과 어긋나면 SPEC이 기준이다. 이 문서는 **구현 순서·구조·테스트 전략**만 정한다.
 
 ---
@@ -36,10 +36,12 @@ krx-stock-scoring/
       resample.py            D → W/M (기간 키·완성 여부·T 상한)
       indicators.py          SMA · RSI(Wilder) · MACD · 기울기
       technical.py           정배열·추세·거래량·매물대 근사·RSI/MACD → Part 5개
-      fundamental.py         PER/PBR 상대비·영업이익률·성장률·ROE·부채비율 → Part 6개
+      fundamental.py         PER·PBR·영업이익률·성장률·ROE·부채비율·배당 → Part 7개
+                             (v2.5: 여섯 항목 모두 최신 정기보고서에서 직접 계산)
       flow.py                derived_zero · 연속 순매수 · 5/20일 누적 규모 보정 → Part 2개
       shorting.py            20일 평균 비중·시장별 경계 → Part 1개
       disclosure.py          공시 사건 → 7점 (M3)
+      news.py                관련 기사 3건 × ±3 → 뉴스 9점 (M3, v2.5 공통 편입)
       universe.py            분류(우선주·스팩·금융·신규·정지)·제외 사유
       aggregate.py           관측률·axis_estimate·상태·rank_eligible·grade·pct_rank·passes_screen
       financial.py           (verify 이식) 계정 정규화·CFS/OFS
@@ -48,7 +50,8 @@ krx-stock-scoring/
     sources/
       upstream.py            ksc_*/ksa_* 일괄 SELECT (커서·청크, 행 수 검증)
       dart.py                corpCode · list.json · fnlttMultiAcnt (verify dart_fin 이식)
-      krx.py                 pykrx PER/PBR 시장별 1회 (M2)
+      krx.py                 pykrx — 배당수익률 DIV·DPS 시장별 1회 (v2.7)
+      naver.py               네이버 검색 — 전 종목 뉴스 (M3, 약 2,585회/일)
     store/
       schema.sql             kss 전용 DB 스키마 (멱등)
       writer.py              run 생성·청크 저장·publish 트랜잭션
@@ -175,20 +178,22 @@ SPEC §7.2의 객체를 **필요한 마일스톤에** 만든다. 열 이름은 M
 - `kss_signal_cross`(partial_technical): `signal.d = data_date`로 연결.
 - **완료 조건**: 전 종목 상태 합계 = 유니버스 · 미래 입력 차단 · 중복 · 워밍업 · 정지 회귀 통과 · 전 종목 실행 **3분 이내**(적재 포함) · **하루 저장량 실측 → 보존 기간 확정**.
 
-### M2 — 기본 35·수급 13·규칙 확정
+### M2 — 기본 36·수급 13·규칙 확정
 
-- `sources/krx.py`: pykrx PER/PBR 시장별(KRX 로그인 필요 — charts와 같은 방식). `kss_sector_stats`: 업종 유효 양수 표본 중앙값, 5 미만이면 시장 폴백.
-- `sources/dart.py` + `domain/fundamental.py`: 누적 기간 매출·영업이익 YoY(4+3), 영업이익률, ROE(연간·평균 자본), 부채비율. `kss_financial_versions`로 접수번호별 불변 저장. 청크 15개로 시작해 증량을 실측한다.
+- `sources/dart.py`(이식 완료) + `domain/financial.py`·`fundamental.py`: **여섯 항목을 최신 정기보고서에서 직접 계산**(SPEC v2.5 §5.3). EPS = TTM 순이익 ÷ (보통주+우선주 상장주식수), BPS = 자본총계 ÷ 같은 주식 수, PER·PBR = 종가 ÷ EPS·BPS, ROE = TTM ÷ 평균 자본, 영업이익률·성장률·부채비율은 누적 기준. TTM = 직전 사업연도 + 당기 누적 − 전년 동기 누적(불가 시 연환산 폴백). 우선주는 티커 앞 5자리로 묶는다.
+- `kss_sector_stats`: 우리가 계산한 PER·PBR의 업종 유효 양수 표본 중앙값, 5 미만이면 시장 폴백. pykrx는 **배당수익률(DIV·DPS)만** 쓴다(v2.7) — PER·PBR은 직접 계산한다. TTM에 직전 사업연도가 필요하므로 DART 호출은 약 357회/일을 유지한다.
+- `kss_financial_versions`로 접수번호별 불변 저장. 청크 15개로 시작해 증량을 실측한다.
 - `domain/flow.py`: `derived_zero`(SPEC §5.4), 인접 거래일이 모두 있어야 인정하는 연속 순매수, 거래대금으로 규모 보정한 5/20일 누적.
 - `domain/shorting.py`: 20거래일 산술평균, **시장별** 경계 확정(M0 분포: KOSPI p50 1.3~3.1% · KOSDAQ 0.5~1.5%).
 - 금융·보험·리츠는 `special_sector`로 분리하고 일반 랭킹에서 뺀다(D5는 보류).
-- **완료 조건**: 실종목 **20개 수작업 대조**(비12월 결산·CFS/OFS·음수 분모·정정 전후 포함) · §4.5 보완값 전부 확정 → `rules/v0.toml` 고정 · 전 종목 `common` 프로필 실행.
+- **완료 조건**: 실종목 **20개 수작업 대조** · §4.5 보완값 전부 확정 → `rules/v0.toml` 고정 · 전 종목 `partial` 프로필(84점) 실행. **2026-09-20 충족** — 대조 109건 전부 일치, 뉴스만 미확정(D7).
 
 ### M3 — 공시·사전·뉴스 보조
 
 - `sources/dart.py` 날짜축 `list.json`(Y·K, `last_reprt_at=N`, 전 페이지): **하루 4~5회**(M0 실측).
+- **뉴스 9점(v2.5 공통 편입)**: `sources/naver.py`로 전 종목 조회(약 2,585회/일), 최근 7일 관련 기사 최신 3건 × 사전 판정(±3). 기사 없음은 `no_event`(0점), 미조회·실패와 구분. 총점이 99점이 되는 시점이 여기다.
 - `domain/flags.py` 이식 → `kss_lexicon` 시드 v1. `disclosure.py`: 30일 창, 정정/철회 관계, fatal은 0으로 덮어쓰기, `kss_risk_events`의 해제 근거.
-- 사전 버전 스냅샷(불변 해시). 뉴스는 `passes_screen` 종목만 조회하고, 사전을 검증하기 전에는 점수를 null로 둔다(목록만 저장).
+- 사전 버전 스냅샷(불변 해시). 사전 검증(D7) 전에는 규칙을 `experimental`로 두고 확정 등급을 게시하지 않는다.
 - **완료 조건**: 중복·철회·해제 사례 테스트 · 사전 1항목 변경 → 두 버전 공존·각각 재현 · 뉴스 제목 300건 라벨링으로 사용 여부 결정(D7).
 
 ### M4 — 운영·게시·복구
@@ -265,6 +270,9 @@ SPEC §11.2·§12를 따른다. **수급·공매도는 보존 구간이 약 2개
 
 | 판 | 일자 | 내용 |
 |---|---|---|
+| v0.6 | 2026-09-20 | SPEC v2.7 반영 — 배당수익률 4점 추가(기본 36·총점 100), pykrx는 DIV·DPS 전용 |
+| v0.5 | 2026-09-20 | SPEC v2.6 반영 — EPS·BPS 네이버 정의(TTM·보통주+우선주 합산), ROE TTM 기준 |
+| v0.4 | 2026-09-20 | SPEC v2.5 반영 — 뉴스 9점 공통 편입(총점 99)·기본 6항목 직접 계산·pykrx 지표 제외, M2/M3 범위 조정 |
 | v0.3 | 2026-09-19 | §2.3 배치 그래프(LangGraph) 그림·노드 설명 추가, 디렉토리에 compute.py·스크립트 반영 |
 | v0.2 | 2026-09-19 | 아키텍처를 이미지로(§2), LangGraph 얇은 그래프 층 채택(원칙 6·§2.1·§7) |
 | v0.1 | 2026-09-19 | 초안 — SPEC v2.2, M0 실측 반영. 단계형 구현, 전용 DB, derived_zero, M4 dispatch |

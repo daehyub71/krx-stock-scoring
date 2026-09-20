@@ -1,0 +1,655 @@
+{
+ "t": "2026-09-18",
+ "timing_s": {
+  "upstream": 44.9,
+  "pykrx_div": 5.5,
+  "corp_codes": 1.5,
+  "dart_reports": 64.3
+ },
+ "tickers_general": 2585,
+ "div_rows": 2714,
+ "market_data": 2579,
+ "corp_mapped": 2585,
+ "dart_calls": 357,
+ "dart_rounds": [
+  [
+   "2026",
+   "11012",
+   2542
+  ],
+  [
+   "2026",
+   "11013",
+   18
+  ],
+  [
+   "2025",
+   "11011",
+   2562
+  ],
+  [
+   "2025",
+   "11014",
+   1
+  ],
+  [
+   "2025",
+   "11012",
+   1
+  ],
+  [
+   "2025",
+   "11013",
+   0
+  ],
+  [
+   "2024",
+   "11011",
+   1
+  ],
+  [
+   "2024",
+   "11014",
+   0
+  ],
+  [
+   "2024",
+   "11012",
+   0
+  ],
+  [
+   "2024",
+   "11013",
+   0
+  ]
+ ],
+ "periodic_found": 2579,
+ "annual_found": 2563,
+ "periodic_report_kind": {
+  " 반기보고서": 2543,
+  " 1분기보고서": 18,
+  " 사업보고서": 17,
+  " 3분기보고서": 1
+ },
+ "states": {
+  "fund.per": {
+   "observed": 1596,
+   "adverse_defined": 940,
+   "missing:unavailable": 31,
+   "missing:stale": 18
+  },
+  "fund.pbr": {
+   "observed": 2542,
+   "missing:stale": 18,
+   "missing:unavailable": 15,
+   "adverse_defined": 10
+  },
+  "fund.op_margin": {
+   "observed": 2353,
+   "not_applicable": 180,
+   "missing:unavailable": 35,
+   "missing:stale": 12,
+   "missing:invalid_value": 5
+  },
+  "fund.growth": {
+   "observed": 2351,
+   "not_applicable": 180,
+   "missing:invalid_value": 40,
+   "missing:stale": 12,
+   "missing:unavailable": 2
+  },
+  "fund.roe": {
+   "observed": 2527,
+   "missing:unavailable": 28,
+   "missing:stale": 18,
+   "adverse_defined": 12
+  },
+  "fund.debt_ratio": {
+   "observed": 2377,
+   "not_applicable": 180,
+   "missing:stale": 12,
+   "adverse_defined": 11,
+   "missing:unavailable": 5
+  },
+  "fund.div": {
+   "observed": 2531,
+   "missing:unavailable": 54
+  }
+ },
+ "points": {
+  "fund.per": {
+   "0.0": 1544,
+   "2.0": 187,
+   "4.0": 254,
+   "6.0": 551
+  },
+  "fund.pbr": {
+   "0.0": 405,
+   "1.0": 227,
+   "2.0": 421,
+   "3.0": 502,
+   "5.0": 997
+  },
+  "fund.op_margin": {
+   "0.0": 807,
+   "1.0": 587,
+   "2.0": 450,
+   "4.0": 214,
+   "5.0": 131,
+   "7.0": 164
+  },
+  "fund.growth": {
+   "0.0": 791,
+   "1.0": 254,
+   "2.0": 196,
+   "3.0": 403,
+   "4.0": 230,
+   "5.0": 198,
+   "6.0": 279
+  },
+  "fund.roe": {
+   "0.0": 945,
+   "1.0": 450,
+   "2.0": 492,
+   "3.0": 297,
+   "5.0": 355
+  },
+  "fund.debt_ratio": {
+   "0.0": 126,
+   "1.0": 152,
+   "2.0": 559,
+   "3.0": 1551
+  },
+  "fund.div": {
+   "0.0": 1510,
+   "1.0": 454,
+   "2.0": 323,
+   "4.0": 244
+  }
+ },
+ "risk_flags": {
+  "capital_impairment": 14
+ },
+ "op_turnaround": 253,
+ "per_median_basis": {
+  "ttm:ttm": 2499,
+  "sector": 1568,
+  "market": 28,
+  "ttm:none": 25,
+  "ttm:annual": 17,
+  "ttm:annualized": 44
+ },
+ "samples": {
+  "000660": {
+   "fund.per": {
+    "state": "observed",
+    "points": 6.0,
+    "note": null,
+    "per": 8.33,
+    "median": 25.06,
+    "median_n": 49,
+    "median_basis": "sector",
+    "ratio": 0.33,
+    "shares": 730492365,
+    "shares_basis": "listed",
+    "report": "2026년 반기보고서",
+    "eps": 221921.54,
+    "ttm_net": 162111993000000.0,
+    "basis": "ttm"
+   },
+   "fund.pbr": {
+    "state": "observed",
+    "points": 1.0,
+    "note": null,
+    "pbr": 5.14,
+    "median": 1.74,
+    "median_n": 68,
+    "median_basis": "sector",
+    "ratio": 2.96,
+    "shares": 730492365,
+    "shares_basis": "listed",
+    "report": "2026년 반기보고서",
+    "bps": 359611.19,
+    "equity": 262693228000000
+   },
+   "fund.op_margin": {
+    "state": "observed",
+    "points": 7.0,
+    "note": null,
+    "op_margin": 74.42,
+    "revenue": 131895033000000,
+    "operating": 98152891000000,
+    "report": "2026년 반기보고서",
+    "basis": "CFS"
+   },
+   "fund.growth": {
+    "state": "observed",
+    "points": 6.0,
+    "note": null,
+    "revenue_yoy": 230.8,
+    "op_yoy": 489.39,
+    "op_turnaround": false,
+    "revenue_points": 3.0,
+    "op_points": 3.0,
+    "report": "2026년 반기보고서",
+    "basis": "CFS"
+   },
+   "fund.roe": {
+    "state": "observed",
+    "points": 5.0,
+    "note": null,
+    "roe": 84.57,
+    "ttm_net": 162111993000000.0,
+    "avg_equity": 191679989500000.0,
+    "basis": "ttm",
+    "report": "2026년 반기보고서"
+   },
+   "fund.debt_ratio": {
+    "state": "observed",
+    "points": 3.0,
+    "note": null,
+    "debt_ratio": 32.8,
+    "report": "2026년 반기보고서",
+    "basis": "CFS"
+   },
+   "fund.div": {
+    "state": "observed",
+    "points": 0.0,
+    "note": null,
+    "div_yield": 0.16,
+    "dps": 3000.0,
+    "source": "krx"
+   }
+  },
+  "005380": {
+   "fund.per": {
+    "state": "observed",
+    "points": 0.0,
+    "note": null,
+    "per": 10.57,
+    "median": 5.57,
+    "median_n": 50,
+    "median_basis": "sector",
+    "ratio": 1.9,
+    "shares": 265390108,
+    "shares_basis": "listed",
+    "report": "2026년 반기보고서",
+    "eps": 34685.16,
+    "ttm_net": 9205099000000.0,
+    "basis": "ttm"
+   },
+   "fund.pbr": {
+    "state": "observed",
+    "points": 2.0,
+    "note": null,
+    "pbr": 0.72,
+    "median": 0.43,
+    "median_n": 61,
+    "median_basis": "sector",
+    "ratio": 1.66,
+    "shares": 265390108,
+    "shares_basis": "listed",
+    "report": "2026년 반기보고서",
+    "bps": 510254.3,
+    "equity": 135416445000000
+   },
+   "fund.op_margin": {
+    "state": "observed",
+    "points": 2.0,
+    "note": null,
+    "op_margin": 5.64,
+    "revenue": 95154214000000,
+    "operating": 5365574000000,
+    "report": "2026년 반기보고서",
+    "basis": "CFS"
+   },
+   "fund.growth": {
+    "state": "observed",
+    "points": 0.0,
+    "note": null,
+    "revenue_yoy": 2.65,
+    "op_yoy": -25.84,
+    "op_turnaround": false,
+    "revenue_points": 0.0,
+    "op_points": 0.0,
+    "report": "2026년 반기보고서",
+    "basis": "CFS"
+   },
+   "fund.roe": {
+    "state": "observed",
+    "points": 2.0,
+    "note": null,
+    "roe": 7.0,
+    "ttm_net": 9205099000000.0,
+    "avg_equity": 131532341000000.0,
+    "basis": "ttm",
+    "report": "2026년 반기보고서"
+   },
+   "fund.debt_ratio": {
+    "state": "observed",
+    "points": 2.0,
+    "note": null,
+    "debt_ratio": 191.33,
+    "report": "2026년 반기보고서",
+    "basis": "CFS"
+   },
+   "fund.div": {
+    "state": "observed",
+    "points": 1.0,
+    "note": null,
+    "div_yield": 2.74,
+    "dps": 10000.0,
+    "source": "krx"
+   }
+  },
+  "005930": {
+   "fund.per": {
+    "state": "observed",
+    "points": 6.0,
+    "note": null,
+    "per": 11.47,
+    "median": 25.06,
+    "median_n": 49,
+    "median_basis": "sector",
+    "ratio": 0.46,
+    "shares": 6648649811,
+    "shares_basis": "listed",
+    "report": "2026년 반기보고서",
+    "eps": 22668.85,
+    "ttm_net": 150717225000000.0,
+    "basis": "ttm"
+   },
+   "fund.pbr": {
+    "state": "observed",
+    "points": 2.0,
+    "note": null,
+    "pbr": 2.98,
+    "median": 1.74,
+    "median_n": 68,
+    "median_basis": "sector",
+    "ratio": 1.72,
+    "shares": 6648649811,
+    "shares_basis": "listed",
+    "report": "2026년 반기보고서",
+    "bps": 87131.93,
+    "equity": 579309676000000
+   },
+   "fund.op_margin": {
+    "state": "observed",
+    "points": 7.0,
+    "note": null,
+    "op_margin": 48.05,
+    "revenue": 305372914000000,
+    "operating": 146725209000000,
+    "report": "2026년 반기보고서",
+    "basis": "CFS"
+   },
+   "fund.growth": {
+    "state": "observed",
+    "points": 6.0,
+    "note": null,
+    "revenue_yoy": 98.67,
+    "op_yoy": 1191.44,
+    "op_turnaround": false,
+    "revenue_points": 3.0,
+    "op_points": 3.0,
+    "report": "2026년 반기보고서",
+    "basis": "CFS"
+   },
+   "fund.roe": {
+    "state": "observed",
+    "points": 5.0,
+    "note": null,
+    "roe": 29.68,
+    "ttm_net": 150717225000000.0,
+    "avg_equity": 507815006500000.0,
+    "basis": "ttm",
+    "report": "2026년 반기보고서"
+   },
+   "fund.debt_ratio": {
+    "state": "observed",
+    "points": 3.0,
+    "note": null,
+    "debt_ratio": 31.1,
+    "report": "2026년 반기보고서",
+    "basis": "CFS"
+   },
+   "fund.div": {
+    "state": "observed",
+    "points": 0.0,
+    "note": null,
+    "div_yield": 0.64,
+    "dps": 1668.0,
+    "source": "krx"
+   }
+  },
+  "035720": {
+   "fund.per": {
+    "state": "observed",
+    "points": 0.0,
+    "note": null,
+    "per": 38.1,
+    "median": 9.26,
+    "median_n": 24,
+    "median_basis": "sector",
+    "ratio": 4.12,
+    "shares": 442999903,
+    "shares_basis": "listed",
+    "report": "2026년 반기보고서",
+    "eps": 881.78,
+    "ttm_net": 390626813118.0,
+    "basis": "ttm"
+   },
+   "fund.pbr": {
+    "state": "observed",
+    "points": 3.0,
+    "note": null,
+    "pbr": 0.99,
+    "median": 0.97,
+    "median_n": 25,
+    "median_basis": "sector",
+    "ratio": 1.02,
+    "shares": 442999903,
+    "shares_basis": "listed",
+    "report": "2026년 반기보고서",
+    "bps": 34025.74,
+    "equity": 15073401181967
+   },
+   "fund.op_margin": {
+    "state": "observed",
+    "points": 4.0,
+    "note": null,
+    "op_margin": 12.09,
+    "revenue": 4040533247476,
+    "operating": 488414000457,
+    "report": "2026년 반기보고서",
+    "basis": "CFS"
+   },
+   "fund.growth": {
+    "state": "observed",
+    "points": 4.0,
+    "note": null,
+    "revenue_yoy": 10.24,
+    "op_yoy": 47.44,
+    "op_turnaround": false,
+    "revenue_points": 1.0,
+    "op_points": 3.0,
+    "report": "2026년 반기보고서",
+    "basis": "CFS"
+   },
+   "fund.roe": {
+    "state": "observed",
+    "points": 1.0,
+    "note": null,
+    "roe": 2.58,
+    "ttm_net": 390626813118.0,
+    "avg_equity": 15149161599008.5,
+    "basis": "ttm",
+    "report": "2026년 반기보고서"
+   },
+   "fund.debt_ratio": {
+    "state": "observed",
+    "points": 3.0,
+    "note": null,
+    "debt_ratio": 83.59,
+    "report": "2026년 반기보고서",
+    "basis": "CFS"
+   },
+   "fund.div": {
+    "state": "observed",
+    "points": 0.0,
+    "note": null,
+    "div_yield": 0.22,
+    "dps": 75.0,
+    "source": "krx"
+   }
+  },
+  "105560": {
+   "fund.per": {
+    "state": "observed",
+    "points": 0.0,
+    "note": null,
+    "per": 9.86,
+    "median": 5.5,
+    "median_n": 63,
+    "median_basis": "sector",
+    "ratio": 1.79,
+    "shares": 354687734,
+    "shares_basis": "listed",
+    "report": "2026년 반기보고서",
+    "eps": 17821.28,
+    "ttm_net": 6320990000000.0,
+    "basis": "ttm"
+   },
+   "fund.pbr": {
+    "state": "observed",
+    "points": 1.0,
+    "note": null,
+    "pbr": 0.99,
+    "median": 0.37,
+    "median_n": 75,
+    "median_basis": "sector",
+    "ratio": 2.65,
+    "shares": 354687734,
+    "shares_basis": "listed",
+    "report": "2026년 반기보고서",
+    "bps": 176780.35,
+    "equity": 62701822000000
+   },
+   "fund.op_margin": {
+    "state": "not_applicable",
+    "points": null,
+    "note": "금융·보험·리츠 — 일반기업 산식 미적용 (SPEC §5.3)"
+   },
+   "fund.growth": {
+    "state": "not_applicable",
+    "points": null,
+    "note": "금융·보험·리츠 — 일반기업 산식 미적용 (SPEC §5.3)"
+   },
+   "fund.roe": {
+    "state": "observed",
+    "points": 3.0,
+    "note": null,
+    "roe": 10.23,
+    "ttm_net": 6320990000000.0,
+    "avg_equity": 61765905500000.0,
+    "basis": "ttm",
+    "report": "2026년 반기보고서"
+   },
+   "fund.debt_ratio": {
+    "state": "not_applicable",
+    "points": null,
+    "note": "금융·보험·리츠 — 일반기업 산식 미적용 (SPEC §5.3)"
+   },
+   "fund.div": {
+    "state": "observed",
+    "points": 1.0,
+    "note": null,
+    "div_yield": 2.5,
+    "dps": 4367.0,
+    "source": "krx"
+   }
+  },
+  "252990": {
+   "fund.per": {
+    "state": "observed",
+    "points": 0.0,
+    "note": null,
+    "per": 35.02,
+    "median": 11.97,
+    "median_n": 178,
+    "median_basis": "sector",
+    "ratio": 2.93,
+    "shares": 60217889,
+    "shares_basis": "listed",
+    "report": "2026년 반기보고서",
+    "eps": 494.06,
+    "ttm_net": 29751158909.0,
+    "basis": "ttm"
+   },
+   "fund.pbr": {
+    "state": "observed",
+    "points": 0.0,
+    "note": null,
+    "pbr": 5.34,
+    "median": 1.13,
+    "median_n": 313,
+    "median_basis": "sector",
+    "ratio": 4.75,
+    "shares": 60217889,
+    "shares_basis": "listed",
+    "report": "2026년 반기보고서",
+    "bps": 3237.73,
+    "equity": 194969436265
+   },
+   "fund.op_margin": {
+    "state": "observed",
+    "points": 7.0,
+    "note": null,
+    "op_margin": 29.45,
+    "revenue": 58440046279,
+    "operating": 17208490550,
+    "report": "2026년 반기보고서",
+    "basis": "OFS"
+   },
+   "fund.growth": {
+    "state": "observed",
+    "points": 6.0,
+    "note": null,
+    "revenue_yoy": 69.53,
+    "op_yoy": 252.33,
+    "op_turnaround": false,
+    "revenue_points": 3.0,
+    "op_points": 3.0,
+    "report": "2026년 반기보고서",
+    "basis": "OFS"
+   },
+   "fund.roe": {
+    "state": "observed",
+    "points": 5.0,
+    "note": null,
+    "roe": 16.46,
+    "ttm_net": 29751158909.0,
+    "avg_equity": 180750524220.5,
+    "basis": "ttm",
+    "report": "2026년 반기보고서"
+   },
+   "fund.debt_ratio": {
+    "state": "observed",
+    "points": 3.0,
+    "note": null,
+    "debt_ratio": 40.18,
+    "report": "2026년 반기보고서",
+    "basis": "OFS"
+   },
+   "fund.div": {
+    "state": "observed",
+    "points": 0.0,
+    "note": null,
+    "div_yield": 0.0,
+    "dps": 0.0,
+    "source": "krx"
+   }
+  }
+ }
+}

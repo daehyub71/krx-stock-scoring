@@ -11,7 +11,13 @@ from datetime import date
 from typing import Any
 
 from scoring import checks, compute
-from scoring.sources import upstream
+from scoring.config import load_env
+from scoring.domain.financial import read_statement
+from scoring.domain.fundamental import MarketData, sector_stats, share_counts, valuation
+from scoring.sources import dart, upstream
+from scoring.sources.corp import parse_corp_codes
+from scoring.sources.dart_fin import fetch_reports
+from scoring.sources.krx import fetch_dividends
 from scoring.state import RunContext, RunState
 from scoring.store import writer
 
@@ -85,16 +91,74 @@ def load(state: RunState, ctx: RunContext) -> RunState:
     )
     ctx.upstream.rollback()  # 읽기 트랜잭션을 닫는다 (풀러 점유 최소화)
     _timed(ctx, "load", started)
+    if state["profile"] != "technical":
+        started = time.monotonic()
+        ctx.fundamentals = _load_fundamentals(ctx)
+        _timed(ctx, "load_fundamentals", started)
     if ctx.run_id is not None:
         writer.update_run(_kss(ctx), ctx.run_id, "computing")
     return {}
+
+
+def _load_fundamentals(ctx: RunContext) -> compute.Fundamentals:
+    """기본 축 입력 — 배당(pykrx 2회) · 합산 주식 수 · DART 보고서 · 업종 중앙값."""
+    assert ctx.snapshot is not None
+    snap, rules = ctx.snapshot, ctx.rules
+    env = load_env()
+    cfg = rules.section("fundamental")
+    div = fetch_dividends(snap.t, env)
+    with ctx.upstream.cursor() as cur:
+        cur.execute("select ticker, list_shrs from ksc_tickers")
+        rows: list[tuple[str, int | None]] = []
+        for ticker, listed in cur.fetchall():
+            rows.append((str(ticker), int(listed) if isinstance(listed, int) else None))
+    ctx.upstream.rollback()
+    shares = share_counts(rows, cfg["preferred_prefix_len"])
+
+    market: dict[str, MarketData] = {}
+    for meta in snap.tickers:
+        bars = snap.bars.get(meta.ticker, ())
+        if not bars or bars[-1].d != snap.t or not shares.get(meta.ticker):
+            continue
+        d = div.get(meta.ticker)
+        market[meta.ticker] = MarketData(
+            close=float(bars[-1].c), shares=shares[meta.ticker],
+            div_yield=d.div_yield if d else None, dps=d.dps if d else None)
+
+    flows = upstream.load_flows(ctx.upstream, snap.window_start, snap.t)
+    shorts = upstream.load_shorting(ctx.upstream, snap.window_start, snap.t)
+    ctx.upstream.rollback()
+
+    corp_map = parse_corp_codes(dart.fetch_corp_codes())
+    general = [m for m in snap.tickers if m.ticker in corp_map]
+    fetched = fetch_reports(sorted({corp_map[m.ticker] for m in general}), snap.t,
+                            dart.get_json, cfg["filing_lag_days"])
+    periodic, annual = {}, {}
+    for m in general:
+        corp = corp_map[m.ticker]
+        if rep := fetched.periodic.get(corp):
+            periodic[m.ticker] = read_statement(rep)
+        if rep := fetched.annual.get(corp):
+            annual[m.ticker] = read_statement(rep)
+
+    # 업종 중앙값은 우리가 계산한 PER·PBR로 만든다 (SPEC v2.6)
+    val_rows = []
+    for m in snap.tickers:
+        v = valuation(market.get(m.ticker), periodic.get(m.ticker), annual.get(m.ticker), rules)
+        if v.per or v.pbr:
+            val_rows.append((m.market, m.sector, v.per or 0.0, v.pbr or 0.0))
+    stats = sector_stats(val_rows, rules.item("fund.per").params["sector_min_samples"])
+    ctx.dart_calls = fetched.calls
+    return compute.Fundamentals(market=market, periodic=periodic, annual=annual, stats=stats,
+                                flows=flows, shorts=shorts)
 
 
 def compute_scores(state: RunState, ctx: RunContext) -> RunState:
     """전 종목 계산."""
     assert ctx.snapshot is not None
     started = time.monotonic()
-    ctx.results = compute.compute_technical(ctx.snapshot, ctx.rules)
+    ctx.results = compute.compute_scores(ctx.snapshot, ctx.rules, state["profile"],
+                                         ctx.fundamentals)
     _timed(ctx, "compute", started)
     return {}
 
@@ -104,10 +168,15 @@ def validate(state: RunState, ctx: RunContext) -> RunState:
     assert ctx.snapshot is not None and ctx.results is not None
     if ctx.run_id is not None:
         writer.update_run(_kss(ctx), ctx.run_id, "validating")
-    compute.validate(ctx.results, ctx.snapshot, items_per_ticker=5)
+    compute.validate(ctx.results, ctx.snapshot,
+                     items_per_ticker=compute.items_per_ticker(state["profile"]))
     summary = compute.summarize(ctx.results)
     summary.update(rows=ctx.snapshot.rows, window_start=ctx.snapshot.window_start.isoformat(),
-                   source=ctx.snapshot.source_id)
+                   source=ctx.snapshot.source_id, dart_calls=ctx.dart_calls,
+                   drift={"checked": ctx.snapshot.drift_checked,
+                          "refetched": ctx.snapshot.drift_listed,
+                          "failed": ctx.snapshot.drift_failed,
+                          "held": len(ctx.snapshot.drifted)})
     return {"stats": {**state.get("stats", {}), "summary": summary}}
 
 
@@ -120,6 +189,8 @@ def persist(state: RunState, ctx: RunContext) -> RunState:
     kss = _kss(ctx)
     written = writer.write_results(kss, ctx.run_id, ctx.snapshot.t, state["profile"],
                                    ctx.results, ctx.snapshot.source_id)
+    if ctx.fundamentals is not None:
+        writer.write_sector_stats(kss, ctx.run_id, ctx.fundamentals.stats.rows())
     stored = writer.count_rows(kss, ctx.run_id)
     if stored != written:
         raise compute.ValidationError(f"저장 행 수 불일치: 기대 {written}, 실제 {stored}")

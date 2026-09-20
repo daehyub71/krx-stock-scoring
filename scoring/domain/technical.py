@@ -21,6 +21,7 @@ from typing import Any
 from scoring.calendar import Calendar
 from scoring.domain.indicators import macd, rsi_wilder, sma
 from scoring.domain.resample import resample
+from scoring.domain.tiers import tier_points
 from scoring.models import DailyBar, MissingReason, Part
 from scoring.rules import Rules
 
@@ -42,17 +43,6 @@ class _MissingError(Exception):
         self.reason = reason
         self.note = note
         self.actual = actual or {}
-
-
-def _tier(value: float, tiers: Sequence[Sequence[float]], cmp: str) -> float:
-    for bound, points in tiers:
-        if (
-            (cmp == "ge" and value >= bound)
-            or (cmp == "le" and value <= bound)
-            or (cmp == "lt" and value < bound)
-        ):
-            return float(points)
-    return 0.0
 
 
 def _last(xs: Sequence[float | None], back: int = 0) -> float:
@@ -149,7 +139,7 @@ def _volume(ctx: _Ctx) -> tuple[float, dict[str, Any]]:
     if avg_long <= 0:
         raise _MissingError("invalid_value", "20일 평균 거래량 0")
     ratio = avg_short / avg_long
-    ratio_points = _tier(ratio, p["ratio_tiers"], p["ratio_cmp"])
+    ratio_points = tier_points(ratio, p["ratio_tiers"], p["ratio_cmp"])
 
     # 상승일·하락일 평균 거래량 — 전일 종가는 종목의 직전 봉
     index = {b.d: i for i, b in enumerate(ctx.bars)}
@@ -202,7 +192,7 @@ def _volume_profile(ctx: _Ctx) -> tuple[float, dict[str, Any]]:
     close = ctx.closes[-1]
     overhead = sum(volume[idx(close) + 1 :]) / total  # 현재가 구간보다 위 구간의 물량
     poc_points = float(p["poc_points"]) if close > poc_price else 0.0
-    overhead_points = _tier(overhead, p["overhead_tiers"], p["overhead_cmp"])
+    overhead_points = tier_points(overhead, p["overhead_tiers"], p["overhead_cmp"])
     return poc_points + overhead_points, {
         "poc_price": poc_price,
         "close": close,

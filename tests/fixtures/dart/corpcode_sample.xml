@@ -1,0 +1,84 @@
+<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+<result>
+    <!-- ① 정상 상장사 — 6자리 숫자 티커 -->
+    <list>
+        <corp_code>00126380</corp_code>
+        <corp_name>삼성전자</corp_name>
+        <corp_eng_name>SAMSUNG ELECTRONICS CO,.LTD</corp_eng_name>
+        <stock_code>005930</stock_code>
+        <modify_date>20250116</modify_date>
+    </list>
+    <!-- ② 정상 상장사 — 값 앞뒤에 공백·개행이 섞인 경우 (strip 필요) -->
+    <list>
+        <corp_code> 01234567 </corp_code>
+        <corp_name>
+            코스맥스엔비티
+        </corp_name>
+        <corp_eng_name>COSMAX NBT</corp_eng_name>
+        <stock_code>
+            222040
+        </stock_code>
+        <modify_date>20240808</modify_date>
+    </list>
+    <!-- ③ 정상 상장사 — 문자가 섞인 티커. 숫자로 바꾸면 깨진다 -->
+    <list>
+        <corp_code>02000001</corp_code>
+        <corp_name>삼성에피스홀딩스</corp_name>
+        <corp_eng_name>Samsung Epis Holdings</corp_eng_name>
+        <stock_code>0126Z0</stock_code>
+        <modify_date>20250501</modify_date>
+    </list>
+    <!-- ④ 비상장 — stock_code가 공백 한 칸 (OpenDART 실제 표기) → 사전에서 제외 -->
+    <list>
+        <corp_code>00434003</corp_code>
+        <corp_name>다코</corp_name>
+        <corp_eng_name>Daco corporation</corp_eng_name>
+        <stock_code> </stock_code>
+        <modify_date>20170630</modify_date>
+    </list>
+    <!-- ⑤ 비상장 — stock_code 태그가 비어 있음 → 제외 -->
+    <list>
+        <corp_code>00434456</corp_code>
+        <corp_name>일산약품</corp_name>
+        <corp_eng_name>Ilsan Pharmaceutical Co.,Ltd.</corp_eng_name>
+        <stock_code></stock_code>
+        <modify_date>20170630</modify_date>
+    </list>
+    <!-- ⑥ 비상장 — stock_code 태그 자체가 없음 → 제외 (KeyError 금지) -->
+    <list>
+        <corp_code>00430964</corp_code>
+        <corp_name>굿앤엘에스</corp_name>
+        <corp_eng_name>Good &amp; LS Co.,Ltd.</corp_eng_name>
+        <modify_date>20170630</modify_date>
+    </list>
+    <!-- ⑦ 중복 — 같은 stock_code에 corp_code 둘 (재상장·법인 승계). modify_date가 최신인 쪽을 쓴다 -->
+    <list>
+        <corp_code>00111111</corp_code>
+        <corp_name>가비아(구)</corp_name>
+        <corp_eng_name>GABIA OLD</corp_eng_name>
+        <stock_code>079940</stock_code>
+        <modify_date>20190101</modify_date>
+    </list>
+    <list>
+        <corp_code>00222222</corp_code>
+        <corp_name>가비아</corp_name>
+        <corp_eng_name>GABIA Inc.</corp_eng_name>
+        <stock_code>079940</stock_code>
+        <modify_date>20240301</modify_date>
+    </list>
+    <!-- ⑧ 중복 — 같은 항목이 두 번 (완전 동일). 하나로 합친다 -->
+    <list>
+        <corp_code>00333333</corp_code>
+        <corp_name>코람코더원리츠</corp_name>
+        <corp_eng_name>Koramco The One REIT</corp_eng_name>
+        <stock_code>417310</stock_code>
+        <modify_date>20230601</modify_date>
+    </list>
+    <list>
+        <corp_code>00333333</corp_code>
+        <corp_name>코람코더원리츠</corp_name>
+        <corp_eng_name>Koramco The One REIT</corp_eng_name>
+        <stock_code>417310</stock_code>
+        <modify_date>20230601</modify_date>
+    </list>
+</result>

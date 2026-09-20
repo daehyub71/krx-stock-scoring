@@ -15,7 +15,7 @@ from pathlib import Path
 import pytest
 
 from scoring.calendar import Calendar
-from scoring.compute import TickerResult, compute_technical, validate
+from scoring.compute import TickerResult, compute_scores, validate
 from scoring.models import DailyBar, TickerMeta
 from scoring.rules import load_rules
 from scoring.sources.upstream import Snapshot
@@ -44,6 +44,7 @@ def load_fixture() -> tuple[Snapshot, dict[str, str]]:
         t=date.fromisoformat(meta["t"]), cal=Calendar(sessions=sessions),
         window_start=sessions[0], tickers=tuple(tickers),
         bars={k: tuple(v) for k, v in bars.items()}, drifted=frozenset(meta["drifted"]),
+        drift_checked="", drift_listed=len(meta["drifted"]), drift_failed=len(meta["drifted"]),
         upstream_meta={}, source_id=meta["source"], rows=sum(len(v) for v in bars.values()),
         load_seconds=0.0,
     )
@@ -55,7 +56,7 @@ SNAP, KINDS = load_fixture()
 
 @pytest.fixture(scope="module")
 def results() -> dict[str, TickerResult]:
-    return {r.entry.meta.ticker: r for r in compute_technical(SNAP, RULES)}
+    return {r.entry.meta.ticker: r for r in compute_scores(SNAP, RULES, "technical")}
 
 
 def by_kind(kind: str) -> list[str]:
@@ -117,7 +118,7 @@ def test_fixture_large_caps_scored(results: dict[str, TickerResult]) -> None:
 
 
 def test_fixture_deterministic() -> None:
-    assert compute_technical(SNAP, RULES) == compute_technical(SNAP, RULES)
+    assert compute_scores(SNAP, RULES, "technical") == compute_scores(SNAP, RULES, "technical")
 
 
 def test_fixture_future_bar_does_not_change_result(results: dict[str, TickerResult]) -> None:
@@ -125,5 +126,5 @@ def test_fixture_future_bar_does_not_change_result(results: dict[str, TickerResu
     last = SNAP.bars[t][-1]
     future = replace(last, d=SNAP.t + timedelta(days=3), c=last.c * 2, v=last.v * 10)
     snap2 = replace(SNAP, bars={**SNAP.bars, t: (*SNAP.bars[t], future)})
-    again = {r.entry.meta.ticker: r for r in compute_technical(snap2, RULES)}
+    again = {r.entry.meta.ticker: r for r in compute_scores(snap2, RULES, "technical")}
     assert again[t] == results[t]

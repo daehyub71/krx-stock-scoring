@@ -16,7 +16,7 @@ from pathlib import Path
 from typing import Any
 
 # 공통 총점에 들어가는 축 (뉴스는 별도, 신용은 비활성)
-COMMON_AXES = ("technical", "fundamental", "disclosure", "flow")
+COMMON_AXES = ("technical", "fundamental", "disclosure", "flow", "news")
 
 
 class RulesError(ValueError):
@@ -40,6 +40,12 @@ class Item:
     pending: bool
     params: dict[str, Any]
 
+    @property
+    def min_points(self) -> float:
+        """항목이 낼 수 있는 최저 점수. 뉴스만 음수다(−9)."""
+        value = self.params.get("min", 0.0)
+        return float(value)
+
     def reachable_max(self) -> float:
         """규칙상 도달 가능한 최대 점수 — 단계 배점의 최대 경로 합(상한 적용).
 
@@ -47,6 +53,8 @@ class Item:
         """
         total = 0.0
         for key, value in self.params.items():
+            if key in {"min", "per_article", "max_articles"}:
+                continue
             if key.endswith("_points") and isinstance(value, int | float):
                 total += value
             elif key.endswith("tiers") and value:

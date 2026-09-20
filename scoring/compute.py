@@ -5,12 +5,27 @@ from __future__ import annotations
 from collections import Counter
 from dataclasses import dataclass
 
-from scoring.domain.aggregate import ScoreRow, aggregate
+from scoring.domain.aggregate import PROFILES, ScoreRow, aggregate
+from scoring.domain.financial import Statement
+from scoring.domain.flow import FlowDay, ShortDay, score_flow
+from scoring.domain.fundamental import MarketData, SectorStats, score_fundamental
 from scoring.domain.technical import score_technical
 from scoring.domain.universe import UniverseEntry, classify
 from scoring.models import Part
 from scoring.rules import Rules
 from scoring.sources.upstream import Snapshot
+
+
+@dataclass(frozen=True)
+class Fundamentals:
+    """기본 축 입력 — 시장 값(종가·합산 주식수·배당)과 보고서, 업종 중앙값."""
+
+    market: dict[str, MarketData]
+    periodic: dict[str, Statement]
+    annual: dict[str, Statement]
+    stats: SectorStats
+    flows: dict[str, list[FlowDay]]
+    shorts: dict[str, list[ShortDay]]
 
 
 @dataclass(frozen=True)
@@ -26,8 +41,19 @@ class ValidationError(RuntimeError):
     """게시 전 검증 실패 — 이전 게시본을 유지한다."""
 
 
-def compute_technical(snapshot: Snapshot, rules: Rules) -> list[TickerResult]:
-    """technical 프로필 — 전 종목 기술 5항목과 집계."""
+def items_per_ticker(profile: str) -> int:
+    """프로필이 만드는 항목 수 — 검증에서 쓴다."""
+    return {"technical": 5, "partial": 15}[profile]
+
+
+def compute_scores(
+    snapshot: Snapshot, rules: Rules, profile: str, fundamentals: Fundamentals | None = None
+) -> list[TickerResult]:
+    """전 종목 계산. `partial`이면 기술 5항목에 기본 7항목을 더한다 (SPEC v2.7)."""
+    if profile not in PROFILES:
+        raise ValueError(f"알 수 없는 프로필: {profile}")
+    if profile == "partial" and fundamentals is None:
+        raise ValueError("partial 프로필에는 기본 축 입력이 필요하다")
     out = []
     for meta in snapshot.tickers:
         # T 이후 봉은 분류에도 쓰지 않는다 (SPEC §11.1 미래 입력 차단)
@@ -37,8 +63,24 @@ def compute_technical(snapshot: Snapshot, rules: Rules) -> list[TickerResult]:
                          drifted=meta.ticker in snapshot.drifted, rules=rules)
         tech = score_technical(bars, snapshot.t, snapshot.cal, rules,
                                stale=meta.ticker in snapshot.drifted)
-        row = aggregate(tech.parts, entry, rules, "technical", tech.passes_screen)
-        out.append(TickerResult(entry=entry, parts=tech.parts, row=row))
+        parts: tuple[Part, ...] = tech.parts
+        extra_risks: tuple[str, ...] = ()
+        if fundamentals is not None:
+            fund = score_fundamental(
+                entry, fundamentals.market.get(meta.ticker), fundamentals.stats,
+                fundamentals.periodic.get(meta.ticker), fundamentals.annual.get(meta.ticker),
+                snapshot.t, rules,
+            )
+            flow_parts = score_flow(
+                fundamentals.flows.get(meta.ticker, []), fundamentals.shorts.get(meta.ticker, []),
+                snapshot.cal.sessions, snapshot.t, meta.market, rules,
+                turnover={b.d: b.a for b in bars},
+            )
+            parts = (*tech.parts, *fund.parts, *flow_parts)
+            extra_risks = fund.risk_flags
+        row = aggregate(parts, entry, rules, profile, tech.passes_screen,
+                        extra_risk_flags=extra_risks)
+        out.append(TickerResult(entry=entry, parts=parts, row=row))
     return out
 
 

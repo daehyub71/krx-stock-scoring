@@ -98,7 +98,7 @@ def test_aggregate_technical_complete_is_scored_without_total() -> None:
                         "tech.volume_profile": 7, "tech.rsi_macd": 0})
     row = aggregate(parts, entry(), RULES, "technical", passes_screen=True)
     assert row.status == "scored"
-    assert row.raw_total == 26
+    assert (row.raw_total, row.profile_max) == (26, 35)
     assert row.coverage == 1.0
     # partial_technical — 완성 총점·등급을 만들지 않는다 (SPEC §8)
     assert (row.total, row.estimated_total, row.grade) == (None, None, None)
@@ -112,7 +112,7 @@ def test_aggregate_rsi_only_does_not_get_full_score() -> None:
     row = aggregate(parts, entry(), RULES, "technical", passes_screen=None)
     assert row.status == "insufficient_data"
     assert row.coverage == pytest.approx(5 / 35, abs=1e-4)  # DB numeric(5,4)
-    assert row.raw_total is None and row.total is None and row.grade is None
+    assert (row.raw_total, row.total, row.grade) == (5, None, None)   # v2.8: 관측 합은 남긴다
     assert row.rank_eligible is False
 
 
@@ -136,7 +136,7 @@ def test_aggregate_below_threshold_insufficient() -> None:
 def test_aggregate_excluded_preferred() -> None:
     parts = tech_parts(dict.fromkeys(TECH, 1.0))
     row = aggregate(parts, entry(meta=meta("005935", "삼성전자우")), RULES, "technical", None)
-    assert (row.status, row.rank_eligible, row.raw_total) == ("excluded", False, None)
+    assert (row.status, row.rank_eligible, row.raw_total) == ("excluded", False, 5)
 
 
 def test_aggregate_special_sector_and_risk_not_rank_eligible() -> None:
@@ -159,13 +159,16 @@ def test_aggregate_signature_tracks_availability() -> None:
 
 # ─────────────────────────── 집계: common 프로필 ───────────────────────────
 
-COMMON = {"tech.alignment": ("technical", 11), "tech.trend": ("technical", 6),
+# v2.7 — 공통 17항목 · 100점 (기술 35 + 기본 36 + 공시 7 + 수급 13 + 뉴스 9)
+COMMON = {"news.naver": ("news", 9),
+          "tech.alignment": ("technical", 11), "tech.trend": ("technical", 6),
           "tech.volume": ("technical", 6), "tech.volume_profile": ("technical", 7),
-          "tech.rsi_macd": ("technical", 5), "fund.per": ("fundamental", 7),
-          "fund.pbr": ("fundamental", 6), "fund.op_margin": ("fundamental", 7),
-          "fund.growth": ("fundamental", 7), "fund.roe": ("fundamental", 5),
-          "fund.debt_ratio": ("fundamental", 3), "disc.dart": ("disclosure", 7),
-          "flow.foreign": ("flow", 6), "flow.inst": ("flow", 5), "flow.shorting": ("flow", 2)}
+          "tech.rsi_macd": ("technical", 5), "fund.per": ("fundamental", 6),
+          "fund.pbr": ("fundamental", 5), "fund.op_margin": ("fundamental", 7),
+          "fund.growth": ("fundamental", 6), "fund.roe": ("fundamental", 5),
+          "fund.debt_ratio": ("fundamental", 3), "fund.div": ("fundamental", 4),
+          "disc.dart": ("disclosure", 7), "flow.foreign": ("flow", 6),
+          "flow.inst": ("flow", 5), "flow.shorting": ("flow", 2)}
 
 
 def common_parts(points: Mapping[str, float | None]) -> list[Part]:
@@ -177,36 +180,44 @@ def common_parts(points: Mapping[str, float | None]) -> list[Part]:
     ]
 
 
-def test_aggregate_common_full_total_is_scaled_to_100() -> None:
-    # 원점수 30/90 → 33.33
-    pts = dict.fromkeys(COMMON, 2.0)  # 15 × 2 = 30
+def test_aggregate_common_total_is_raw_100_scale() -> None:
+    # v2.7 — 환산하지 않는다. 17항목 × 2 = 34
+    pts = dict.fromkeys(COMMON, 2.0)
     row = aggregate(common_parts(pts), entry(), RULES, "common", None)
-    assert (row.status, row.raw_total, row.total) == ("scored", 30, 33.33)
+    assert (row.status, row.raw_total, row.total) == ("scored", 34, 34.0)
     assert row.grade is None  # experimental 규칙은 확정 등급을 내지 않는다
+
+
+def test_aggregate_common_negative_news_lowers_total() -> None:
+    # 뉴스 3건 모두 악재 → −9. 나머지는 0점이면 총점 −9 (0으로 자르지 않는다)
+    pts: dict[str, float | None] = dict.fromkeys(COMMON, 0.0)
+    pts["news.naver"] = -9.0
+    row = aggregate(common_parts(pts), entry(), RULES, "common", None)
+    assert (row.status, row.total) == ("scored", -9.0)
 
 
 def test_aggregate_common_grade_when_not_experimental() -> None:
     rules = replace(RULES, experimental=False)
-    pts = {i: float(mx) for i, (_, mx) in COMMON.items()}  # 만점 90 → 100
+    pts = {i: float(mx) for i, (_, mx) in COMMON.items()}  # 만점 100
     row = aggregate(common_parts(pts), entry(), rules, "common", None)
     assert (row.total, row.grade) == (100.0, "A")
-    pts_low = dict.fromkeys(COMMON, 2.0)  # 30/90 → 33.33 → D
+    pts_low = dict.fromkeys(COMMON, 2.0)  # 34 → D
     assert aggregate(common_parts(pts_low), entry(), rules, "common", None).grade == "D"
 
 
 def test_aggregate_common_provisional_estimate() -> None:
-    # PER(7)·PBR(6) 결측: 기본 22/35 = 0.629 ≥ 0.6, 전체 77/90 = 0.856 ≥ 0.8 → provisional
-    # 모든 관측 항목이 만점의 절반을 받았다고 하면 축 추정 = 축 만점의 절반 → 추정 총점 50.0
+    # PER(6)·PBR(5) 결측: 기본 25/36 = 0.694 ≥ 0.6, 전체 89/100 = 0.89 ≥ 0.8 → provisional
+    # 관측 항목이 모두 만점의 절반이면 축 추정 = 축 만점의 절반 → 추정 총점 50.0
     pts = {i: mx / 2 for i, (_, mx) in COMMON.items() if i not in {"fund.per", "fund.pbr"}}
     row = aggregate(common_parts(pts), entry(), RULES, "common", None)
     assert row.status == "provisional"
     assert row.total is None
     assert row.estimated_total == pytest.approx(50.0)
-    assert row.coverage == pytest.approx(77 / 90, abs=1e-4)
+    assert row.coverage == pytest.approx(89 / 100, abs=1e-4)
 
 
 def test_aggregate_common_axis_zero_available_is_insufficient() -> None:
-    # 공시 축 전체 결측: 전체 83/90 = 0.92 이지만 공시 축 0 < 0.6 → 자료 부족
+    # 공시 축 전체 결측: 전체 93/100 = 0.93 이지만 공시 축 0 < 0.6 → 자료 부족
     pts = {i: 1.0 for i in COMMON if i != "disc.dart"}
     row = aggregate(common_parts(pts), entry(), RULES, "common", None)
     assert row.status == "insufficient_data"
@@ -222,10 +233,18 @@ def test_aggregate_adverse_and_no_event_count_as_available() -> None:
     ]
     row = aggregate(parts, entry(), RULES, "common", None)
     assert row.status == "scored"
-    assert row.raw_total == 13 * 1.0 + 0.0 + 4.0
+    assert row.raw_total == 15 * 1.0 + 0.0 + 4.0
 
 
 def test_aggregate_rejects_points_above_max() -> None:
-    parts = common_parts(dict.fromkeys(COMMON, 3.0))  # 공매도 만점 2 < 3
+    parts = common_parts(dict.fromkeys(COMMON, 3.0))  # 공매도 만점 2 < 3 (범위 밖)
     with pytest.raises(ValueError):
         aggregate(parts, entry(), RULES, "common", None)
+
+
+def test_aggregate_extra_risk_flag_blocks_ranking() -> None:
+    parts = tech_parts(dict.fromkeys(TECH, 1.0))
+    row = aggregate(parts, entry(), RULES, "technical", None,
+                    extra_risk_flags=("capital_impairment",))
+    assert row.status == "scored" and row.rank_eligible is False
+    assert row.risk_flags == ("capital_impairment",)
