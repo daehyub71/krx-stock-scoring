@@ -188,6 +188,31 @@ create table if not exists kss_sector_stats (
   constraint kss_sector_stats_metric check (metric in ('per', 'pbr'))
 );
 
+-- 재무 원본 불변 버전 (SPEC §7.2) — 접수번호·내용 해시로 정정 전후를 모두 보존한다.
+-- 같은 보고서를 다시 받아도 내용이 같으면 행이 늘지 않는다(on conflict do nothing).
+create table if not exists kss_financial_versions (
+  corp_code     text not null,
+  bsns_year     text not null,
+  reprt_code    text not null,
+  rcept_no      text not null,
+  content_hash  text not null,
+  basis         text,                      -- CFS / OFS
+  period_end    date,
+  rcept_date    date,
+  items         jsonb not null,            -- 점수에 쓰는 계정만 (매출·영업이익·순이익·자본·부채)
+  observed_at   timestamptz not null default now(),
+  primary key (corp_code, bsns_year, reprt_code, rcept_no, content_hash)
+);
+
+-- 종목 ↔ DART 법인 매핑 버전 (SPEC §7.2) — corpCode.xml 내용 해시가 버전이다
+create table if not exists kss_corp_map (
+  mapping_version text not null,
+  stock_code      text not null,
+  corp_code       text not null,
+  observed_at     timestamptz not null default now(),
+  primary key (mapping_version, stock_code)
+);
+
 -- ───────────────────────── alerts 대조 ─────────────────────────
 -- signal.d = score.data_date 로 연결 (SPEC §8). M1은 기술 전용(partial_technical).
 -- available_at_signal: 점수 게시 시각 ≤ 신호 생성 시각 — 그때 실제로 볼 수 있었던 점수인가
@@ -215,7 +240,7 @@ create table if not exists kss_signal_cross (
 -- Supabase 기본 권한이 public 스키마 새 표를 anon·authenticated에 열어 둔다 → 표마다 회수한다.
 revoke all on kss_runs, kss_source_checks, kss_universe_snapshots, kss_scores,
               kss_score_parts, kss_publications, kss_publication_history, kss_signal_cross,
-              kss_sector_stats
+              kss_sector_stats, kss_financial_versions, kss_corp_map
   from anon, authenticated;
 
 alter table kss_runs                enable row level security;
@@ -227,12 +252,15 @@ alter table kss_publications        enable row level security;
 alter table kss_publication_history enable row level security;
 alter table kss_signal_cross        enable row level security;
 alter table kss_sector_stats        enable row level security;
+alter table kss_financial_versions  enable row level security;
+alter table kss_corp_map            enable row level security;
 
 -- kss_batch: 필요한 쓰기만. 삭제는 근거 보존 정리(parts)에만
 grant select, insert, update on kss_runs, kss_source_checks, kss_universe_snapshots,
                                kss_scores, kss_score_parts, kss_publications,
                                kss_publication_history, kss_signal_cross,
-                               kss_sector_stats to kss_batch;
+                               kss_sector_stats, kss_financial_versions,
+                               kss_corp_map to kss_batch;
 grant delete on kss_score_parts, kss_publications, kss_signal_cross to kss_batch;
 
 drop policy if exists kss_runs_batch on kss_runs;
@@ -244,6 +272,8 @@ drop policy if exists kss_publications_batch on kss_publications;
 drop policy if exists kss_pub_history_batch on kss_publication_history;
 drop policy if exists kss_cross_batch on kss_signal_cross;
 drop policy if exists kss_sector_stats_batch on kss_sector_stats;
+drop policy if exists kss_fin_versions_batch on kss_financial_versions;
+drop policy if exists kss_corp_map_batch on kss_corp_map;
 create policy kss_runs_batch          on kss_runs                for all to kss_batch using (true) with check (true);
 create policy kss_source_checks_batch on kss_source_checks       for all to kss_batch using (true) with check (true);
 create policy kss_universe_batch      on kss_universe_snapshots  for all to kss_batch using (true) with check (true);
@@ -253,6 +283,8 @@ create policy kss_publications_batch  on kss_publications        for all to kss_
 create policy kss_pub_history_batch   on kss_publication_history for all to kss_batch using (true) with check (true);
 create policy kss_cross_batch         on kss_signal_cross        for all to kss_batch using (true) with check (true);
 create policy kss_sector_stats_batch  on kss_sector_stats        for all to kss_batch using (true) with check (true);
+create policy kss_fin_versions_batch  on kss_financial_versions  for all to kss_batch using (true) with check (true);
+create policy kss_corp_map_batch      on kss_corp_map            for all to kss_batch using (true) with check (true);
 
 -- kss_reader: SELECT만, 그리고 게시된 run의 행만 (SPEC N11)
 grant select on kss_runs, kss_source_checks, kss_scores, kss_score_parts,

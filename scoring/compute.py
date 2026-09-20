@@ -3,7 +3,8 @@
 from __future__ import annotations
 
 from collections import Counter
-from dataclasses import dataclass
+from dataclasses import dataclass, field
+from typing import Any
 
 from scoring.domain.aggregate import PROFILES, ScoreRow, aggregate
 from scoring.domain.financial import Statement
@@ -26,6 +27,9 @@ class Fundamentals:
     stats: SectorStats
     flows: dict[str, list[FlowDay]]
     shorts: dict[str, list[ShortDay]]
+    corp_map_version: str = ""
+    corp_map: dict[str, str] = field(default_factory=dict)
+    report_versions: tuple[tuple[Any, ...], ...] = ()   # kss_financial_versions 저장용
 
 
 @dataclass(frozen=True)

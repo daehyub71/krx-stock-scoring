@@ -6,6 +6,8 @@ dry_run이면 kss에 아무것도 쓰지 않는다.
 
 from __future__ import annotations
 
+import hashlib
+import json
 import time
 from datetime import date
 from typing import Any
@@ -100,6 +102,24 @@ def load(state: RunState, ctx: RunContext) -> RunState:
     return {}
 
 
+# 점수에 쓰는 계정만 보존한다 — 원본 전체를 매일 복제하지 않는다 (SPEC §7.3)
+KEEP_ACCOUNTS = ("매출액", "영업이익", "당기순이익", "자본총계", "부채총계")
+
+
+def _version_row(rep: Any, st: Any) -> tuple[Any, ...]:
+    """보고서 하나를 `kss_financial_versions` 한 행으로 (내용 해시 포함)."""
+    items = [
+        it for it in rep.items
+        if any(str(it.get("account_nm", "")).replace(" ", "").startswith(a) for a in KEEP_ACCOUNTS)
+    ]
+    payload = json.dumps(items, sort_keys=True, ensure_ascii=False, separators=(",", ":"))
+    digest = hashlib.sha256(payload.encode("utf-8")).hexdigest()[:32]
+    from psycopg.types.json import Jsonb  # noqa: PLC0415 — 저장 층 어댑터
+
+    return (rep.corp_code, rep.bsns_year, rep.reprt_code, rep.rcept_no, digest,
+            st.basis, st.period_end, rep.rcept_date, Jsonb(items))
+
+
 def _load_fundamentals(ctx: RunContext) -> compute.Fundamentals:
     """기본 축 입력 — 배당(pykrx 2회) · 합산 주식 수 · DART 보고서 · 업종 중앙값."""
     assert ctx.snapshot is not None
@@ -129,17 +149,25 @@ def _load_fundamentals(ctx: RunContext) -> compute.Fundamentals:
     shorts = upstream.load_shorting(ctx.upstream, snap.window_start, snap.t)
     ctx.upstream.rollback()
 
-    corp_map = parse_corp_codes(dart.fetch_corp_codes())
+    corp_bytes = dart.fetch_corp_codes()
+    corp_map = parse_corp_codes(corp_bytes)
+    corp_version = hashlib.sha256(corp_bytes).hexdigest()[:16]
     general = [m for m in snap.tickers if m.ticker in corp_map]
     fetched = fetch_reports(sorted({corp_map[m.ticker] for m in general}), snap.t,
                             dart.get_json, cfg["filing_lag_days"])
     periodic, annual = {}, {}
+    versions: dict[tuple[str, str], tuple[Any, ...]] = {}
     for m in general:
         corp = corp_map[m.ticker]
-        if rep := fetched.periodic.get(corp):
-            periodic[m.ticker] = read_statement(rep)
-        if rep := fetched.annual.get(corp):
-            annual[m.ticker] = read_statement(rep)
+        for rep in (fetched.periodic.get(corp), fetched.annual.get(corp)):
+            if rep is None:
+                continue
+            st = read_statement(rep)
+            if rep is fetched.periodic.get(corp):
+                periodic[m.ticker] = st
+            if rep is fetched.annual.get(corp):
+                annual[m.ticker] = st
+            versions[(rep.corp_code, rep.rcept_no)] = _version_row(rep, st)
 
     # 업종 중앙값은 우리가 계산한 PER·PBR로 만든다 (SPEC v2.6)
     val_rows = []
@@ -150,7 +178,8 @@ def _load_fundamentals(ctx: RunContext) -> compute.Fundamentals:
     stats = sector_stats(val_rows, rules.item("fund.per").params["sector_min_samples"])
     ctx.dart_calls = fetched.calls
     return compute.Fundamentals(market=market, periodic=periodic, annual=annual, stats=stats,
-                                flows=flows, shorts=shorts)
+                                flows=flows, shorts=shorts, corp_map_version=corp_version,
+                                corp_map=corp_map, report_versions=tuple(versions.values()))
 
 
 def compute_scores(state: RunState, ctx: RunContext) -> RunState:
@@ -190,7 +219,10 @@ def persist(state: RunState, ctx: RunContext) -> RunState:
     written = writer.write_results(kss, ctx.run_id, ctx.snapshot.t, state["profile"],
                                    ctx.results, ctx.snapshot.source_id)
     if ctx.fundamentals is not None:
-        writer.write_sector_stats(kss, ctx.run_id, ctx.fundamentals.stats.rows())
+        f = ctx.fundamentals
+        writer.write_sector_stats(kss, ctx.run_id, f.stats.rows())
+        writer.write_financial_versions(kss, f.report_versions)
+        writer.write_corp_map(kss, f.corp_map_version, f.corp_map)
     stored = writer.count_rows(kss, ctx.run_id)
     if stored != written:
         raise compute.ValidationError(f"저장 행 수 불일치: 기대 {written}, 실제 {stored}")

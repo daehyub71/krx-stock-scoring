@@ -19,7 +19,7 @@ TABLES = re.findall(r"create table if not exists (\w+)", SQL)
 M1_TABLES = {
     "kss_runs", "kss_source_checks", "kss_universe_snapshots", "kss_scores",
     "kss_score_parts", "kss_publications", "kss_publication_history", "kss_signal_cross",
-    "kss_sector_stats",
+    "kss_sector_stats", "kss_financial_versions", "kss_corp_map",
 }
 
 

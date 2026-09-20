@@ -9,7 +9,7 @@
 from __future__ import annotations
 
 import json
-from collections.abc import Iterable, Sequence
+from collections.abc import Iterable, Mapping, Sequence
 from datetime import date, datetime
 from typing import Any
 from uuid import UUID
@@ -142,6 +142,34 @@ def write_sector_stats(
         )
     conn.commit()
     return len(rows)
+
+
+def write_financial_versions(conn: Conn, rows: Sequence[tuple[Any, ...]]) -> int:
+    """재무 원본 불변 버전 — 같은 접수번호·내용이면 늘지 않는다 (SPEC §7.2)."""
+    with conn.cursor() as cur:
+        for chunk in _chunks(rows):
+            cur.executemany(
+                "insert into kss_financial_versions (corp_code, bsns_year, reprt_code, rcept_no, "
+                "content_hash, basis, period_end, rcept_date, items) "
+                "values (%s, %s, %s, %s, %s, %s, %s, %s, %s) on conflict do nothing", chunk)
+            conn.commit()
+    return len(rows)
+
+
+def write_corp_map(conn: Conn, version: str, mapping: Mapping[str, str]) -> int:
+    """종목 ↔ 법인 매핑 버전. 이미 있는 버전이면 아무것도 쓰지 않는다."""
+    with conn.cursor() as cur:
+        cur.execute("select 1 from kss_corp_map where mapping_version = %s limit 1", (version,))
+        if cur.fetchone():
+            conn.rollback()
+            return 0
+        rows = [(version, stock, corp) for stock, corp in sorted(mapping.items())]
+        for chunk in _chunks(rows):
+            cur.executemany(
+                "insert into kss_corp_map (mapping_version, stock_code, corp_code) "
+                "values (%s, %s, %s) on conflict do nothing", chunk)
+            conn.commit()
+    return len(mapping)
 
 
 def count_rows(conn: Conn, run_id: UUID) -> dict[str, int]:
