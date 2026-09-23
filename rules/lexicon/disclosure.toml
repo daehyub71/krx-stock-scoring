@@ -1,0 +1,158 @@
+# 공시 규칙표 — DART 제목을 호재/악재/치명으로 가르는 규칙 (SPEC §5.5).
+#
+# **이 파일이 편집 원본이다.** 순서가 곧 우선순위다 — 위에서부터 먼저 걸린다.
+# 🔴(red)·🟡(amber)는 둘 다 악재 −2점이고, 등급은 근거 표시에만 쓴다.
+# fatal = true면 그 사건 하나로 공시 점수가 0이 된다 (자회사 공시로 강등되면 풀린다).
+#
+# 항목
+#   id       규칙 이름 — `tests/test_flags.py`의 SAMPLES에 같은 이름의 양성·음성 표본이 있어야 한다
+#   level    red | amber | positive
+#   keywords 정규화된 제목(공백 제거)에서 찾을 말. 하나라도 있으면 걸린다
+#   exclude  이 말이 함께 있으면 걸리지 않는다
+#   on_note  제목 뒤 괄호 설명까지 볼 것인가 (감사의견은 거기에만 온다)
+#   fatal    치명 — 공시 점수를 0으로 덮는다
+#
+# **표본 없는 규칙은 테스트가 막는다.** 규칙을 더하면 SPEC §5.5와 표본을 함께 고친다.
+
+[[rule]]
+id = "cb"
+level = "red"
+keywords = ["전환사채권발행결정"]
+
+[[rule]]
+id = "bw"
+level = "red"
+keywords = ["신주인수권부사채권발행결정"]
+
+[[rule]]
+id = "eb"
+level = "red"
+keywords = ["교환사채권발행결정"]
+
+[[rule]]
+id = "rights_issue"
+level = "red"
+keywords = ["유상증자결정", "유무상증자결정"]
+
+[[rule]]
+id = "controller_change"
+level = "red"
+keywords = ["최대주주변경"]
+exclude = ["담보제공"]
+
+[[rule]]
+id = "admin_issue"
+level = "red"
+keywords = ["관리종목지정"]
+exclude = ["우려", "해제"]
+
+[[rule]]
+id = "caution_issue"
+level = "red"
+keywords = ["투자주의환기종목지정"]
+exclude = ["해제"]
+
+[[rule]]
+id = "unfaithful"
+level = "red"
+keywords = ["불성실공시법인지정"]
+exclude = ["예고", "미지정"]
+
+[[rule]]
+id = "delisting"
+level = "red"
+keywords = ["상장폐지"]
+exclude = ["해소"]
+fatal = true
+
+[[rule]]
+id = "embezzlement"
+level = "red"
+keywords = ["횡령", "배임"]
+fatal = true
+
+[[rule]]
+id = "rehabilitation"
+level = "red"
+keywords = ["회생절차"]
+exclude = ["종결", "폐지"]
+fatal = true
+
+[[rule]]
+id = "audit"
+level = "red"
+keywords = ["의견거절", "범위제한", "비적정", "부적정"]
+on_note = true
+fatal = true
+
+[[rule]]
+id = "treasury_buy"
+level = "positive"
+keywords = ["자기주식취득결정"]
+exclude = ["처분", "해지", "결과보고서"]
+
+[[rule]]
+id = "treasury_trust"
+level = "positive"
+keywords = ["자기주식취득신탁계약체결결정"]
+exclude = ["해지"]
+
+[[rule]]
+id = "bonus_issue"
+level = "positive"
+keywords = ["무상증자결정"]
+exclude = ["유무상", "철회"]
+
+[[rule]]
+id = "dividend"
+level = "positive"
+keywords = ["현금·현물배당결정"]
+exclude = ["철회"]
+
+[[rule]]
+id = "supply_contract"
+level = "positive"
+keywords = ["단일판매·공급계약체결"]
+exclude = ["해지", "해제"]
+
+[[rule]]
+id = "trading_halt"
+level = "amber"
+keywords = ["매매거래정지"]
+exclude = ["해제"]
+
+[[rule]]
+id = "lawsuit"
+level = "amber"
+keywords = ["소송등의제기"]
+
+[[rule]]
+id = "treasury_sale"
+level = "amber"
+keywords = ["자기주식처분결정"]
+
+[[rule]]
+id = "pledge"
+level = "amber"
+keywords = ["최대주주변경을수반하는주식담보제공"]
+
+[[rule]]
+id = "admin_warning"
+level = "amber"
+keywords = ["관리종목지정우려"]
+
+[[rule]]
+id = "unfaithful_warning"
+level = "amber"
+keywords = ["불성실공시법인지정예고"]
+
+[[rule]]
+id = "market_warning"
+level = "amber"
+keywords = ["투자경고종목지정", "투자위험종목지정"]
+exclude = ["해제"]
+
+[[rule]]
+id = "capital_reduction"
+level = "amber"
+keywords = ["감자결정"]

@@ -4,12 +4,16 @@ from __future__ import annotations
 
 from collections import Counter
 from dataclasses import dataclass, field
+from datetime import datetime
 from typing import Any
 
 from scoring.domain.aggregate import PROFILES, ScoreRow, aggregate
+from scoring.domain.disclosure import DisclosureRow, score_disclosure
 from scoring.domain.financial import Statement
 from scoring.domain.flow import FlowDay, ShortDay, score_flow
 from scoring.domain.fundamental import MarketData, SectorStats, score_fundamental
+from scoring.domain.lexicon import Lexicon
+from scoring.domain.news import Article, score_news
 from scoring.domain.technical import score_technical
 from scoring.domain.universe import UniverseEntry, classify
 from scoring.models import Part
@@ -33,6 +37,19 @@ class Fundamentals:
 
 
 @dataclass(frozen=True)
+class Events:
+    """공시·뉴스 입력 (M3). 종목에 자료가 없는 것과 조회하지 않은 것을 구분해 담는다."""
+
+    disclosures: dict[str, list[DisclosureRow]]
+    disclosure_lexicon: Lexicon
+    news: dict[str, list[Article]] = field(default_factory=dict)
+    news_status: dict[str, str] = field(default_factory=dict)
+    news_lexicon: Lexicon | None = None
+    cutoff: datetime | None = None
+    disclosure_queried: bool = True
+
+
+@dataclass(frozen=True)
 class TickerResult:
     """한 종목의 계산 결과."""
 
@@ -47,17 +64,26 @@ class ValidationError(RuntimeError):
 
 def items_per_ticker(profile: str) -> int:
     """프로필이 만드는 항목 수 — 검증에서 쓴다."""
-    return {"technical": 5, "partial": 15}[profile]
+    return {"technical": 5, "partial": 15, "common": 17}[profile]
 
 
 def compute_scores(
-    snapshot: Snapshot, rules: Rules, profile: str, fundamentals: Fundamentals | None = None
+    snapshot: Snapshot,
+    rules: Rules,
+    profile: str,
+    fundamentals: Fundamentals | None = None,
+    events: Events | None = None,
 ) -> list[TickerResult]:
-    """전 종목 계산. `partial`이면 기술 5항목에 기본 7항목을 더한다 (SPEC v2.7)."""
+    """전 종목 계산.
+
+    `partial`은 기술 5 + 기본 7 + 수급 3항목, `common`은 여기에 공시 1 + 뉴스 1을 더해 17항목이다.
+    """
     if profile not in PROFILES:
         raise ValueError(f"알 수 없는 프로필: {profile}")
-    if profile == "partial" and fundamentals is None:
-        raise ValueError("partial 프로필에는 기본 축 입력이 필요하다")
+    if profile in ("partial", "common") and fundamentals is None:
+        raise ValueError(f"{profile} 프로필에는 기본 축 입력이 필요하다")
+    if profile == "common" and events is None:
+        raise ValueError("common 프로필에는 공시·뉴스 입력이 필요하다")
     out = []
     for meta in snapshot.tickers:
         # T 이후 봉은 분류에도 쓰지 않는다 (SPEC §11.1 미래 입력 차단)
@@ -82,6 +108,18 @@ def compute_scores(
             )
             parts = (*tech.parts, *fund.parts, *flow_parts)
             extra_risks = fund.risk_flags
+        if events is not None:
+            disc = score_disclosure(
+                events.disclosures.get(meta.ticker, []), snapshot.t, meta.name, rules,
+                queried=events.disclosure_queried,
+            )
+            news_lex = events.news_lexicon
+            cutoff = events.cutoff or datetime.combine(snapshot.t, datetime.min.time())
+            news = score_news(
+                events.news.get(meta.ticker, []), cutoff, meta.name, news_lex, rules,
+                status=events.news_status.get(meta.ticker, "not_queried"),
+            ) if news_lex is not None else None
+            parts = (*parts, disc) if news is None else (*parts, disc, news)
         row = aggregate(parts, entry, rules, profile, tech.passes_screen,
                         extra_risk_flags=extra_risks)
         out.append(TickerResult(entry=entry, parts=parts, row=row))

@@ -11,12 +11,14 @@ from __future__ import annotations
 import json
 from collections.abc import Iterable, Mapping, Sequence
 from datetime import date, datetime
+from pathlib import Path
 from typing import Any
 from uuid import UUID
 
 import psycopg
 from psycopg.types.json import Jsonb
 
+from scoring import archive
 from scoring.checks import SourceCheck
 from scoring.compute import TickerResult
 from scoring.rules import Rules
@@ -30,6 +32,11 @@ def _chunks(
 ) -> Iterable[Sequence[tuple[Any, ...]]]:
     for i in range(0, len(rows), size):
         yield rows[i : i + size]
+
+
+def json_value(value: Any) -> Jsonb:
+    """노드 층이 jsonb 열에 값을 넣을 때 쓰는 어댑터 (psycopg 타입을 밖으로 내보내지 않는다)."""
+    return _json(value)
 
 
 def _json(value: Any) -> Jsonb:
@@ -236,3 +243,198 @@ def write_signal_cross(conn: Conn, rows: Sequence[tuple[Any, ...]]) -> int:
         )
     conn.commit()
     return len(rows)
+
+
+# ── M3 공시·사전·뉴스 ───────────────────────────────────────────
+
+
+def write_disclosures(conn: Conn, rows: Sequence[tuple[Any, ...]]) -> int:
+    """공시 원본 — 접수번호가 곧 키다. 같은 공시를 다시 받아도 `first_seen_at`은 그대로 둔다."""
+    with conn.cursor() as cur:
+        for chunk in _chunks(rows):
+            cur.executemany(
+                "insert into kss_disclosures (rcept_no, corp_code, stock_code, corp_name, "
+                "corp_cls, report_nm, rcept_dt, flr_nm, rm, norm_name, corrected, note) "
+                "values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+                "on conflict (rcept_no) do update set fetched_at = now()", chunk)
+            conn.commit()
+    return len(rows)
+
+
+def write_risk_events(conn: Conn, rows: Sequence[tuple[Any, ...]]) -> int:
+    """판정된 사건. 사전 버전이 다르면 다른 행이다 — 과거 판정을 덮어쓰지 않는다."""
+    with conn.cursor() as cur:
+        for chunk in _chunks(rows):
+            cur.executemany(
+                "insert into kss_risk_events (ticker, rcept_no, rule_id, lexicon_version, "
+                "level, fatal, subsidiary, rcept_dt) values (%s, %s, %s, %s, %s, %s, %s, %s) "
+                "on conflict do nothing", chunk)
+            conn.commit()
+    return len(rows)
+
+
+def write_lexicon_version(conn: Conn, version: str, scope: str, entries: Sequence[Any]) -> int:
+    """사전 스냅샷. 같은 내용이면 행이 늘지 않는다 (SPEC §5.5)."""
+    with conn.cursor() as cur:
+        cur.execute(
+            "insert into kss_lexicon_versions (lexicon_version, scope, entry_count, entries) "
+            "values (%s, %s, %s, %s) on conflict (lexicon_version) do nothing",
+            (version, scope, len(entries), _json(list(entries))))
+        conn.commit()
+        return int(cur.rowcount or 0)
+
+
+def write_news_observations(conn: Conn, run_id: UUID, rows: Sequence[tuple[Any, ...]]) -> int:
+    """실행 단위 뉴스 관측 — 미조회·실패·기사 없음을 그대로 남긴다."""
+    with conn.cursor() as cur:
+        for chunk in _chunks([(run_id, *r) for r in rows]):
+            cur.executemany(
+                "insert into kss_news_observations (run_id, ticker, status, query, window_from, "
+                "window_to, articles, points, lexicon_version, note) "
+                "values (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s) "
+                "on conflict (run_id, ticker) do nothing", chunk)
+            conn.commit()
+    return len(rows)
+
+
+# ── M4 운영 — 좀비 실행 정리 · 복구 대상 ────────────────────────
+
+
+def sweep_stale_runs(conn: Conn, minutes: int = 90) -> list[UUID]:
+    """heartbeat가 끊긴 실행을 `failed`로 닫는다 (SPEC §6.4).
+
+    강제 종료된 실행(러너 타임아웃·취소)은 `computing` 상태로 남아 다음 실행이 같은 T를
+    이미 처리 중이라고 오해하게 만든다. **게시된 실행은 건드리지 않는다** — 끝나지 않은 것만 닫는다.
+
+    Args:
+        conn: kss 연결.
+        minutes: 이만큼 heartbeat가 없으면 죽은 것으로 본다.
+
+    Returns:
+        닫은 실행 ID.
+    """
+    with conn.cursor() as cur:
+        cur.execute(
+            "update kss_runs set status = 'failed', finished_at = now(), updated_at = now(), "
+            "error = coalesce(error, %s) "
+            "where status in ('created', 'checking', 'computing', 'validating') "
+            "  and coalesce(heartbeat_at, created_at) < now() - make_interval(mins => %s) "
+            "returning run_id",
+            (f"heartbeat {minutes}분 끊김 — 강제 종료로 본다", minutes),
+        )
+        rows = [UUID(str(r[0])) for r in cur.fetchall()]
+    conn.commit()
+    return rows
+
+
+def published_dates(conn: Conn, profile: str, since: date) -> set[date]:
+    """이미 게시된 거래일 (복구 대상을 가릴 때 쓴다)."""
+    with conn.cursor() as cur:
+        cur.execute(
+            "select data_date from kss_publications where profile = %s and data_date >= %s",
+            (profile, since),
+        )
+        out = {r[0] for r in cur.fetchall()}
+    conn.rollback()
+    return out
+
+
+# ── M4 아카이브·보존 삭제 ───────────────────────────────────────
+
+
+def export_run(conn: Conn, run_id: UUID, out_dir: Path) -> archive.Manifest:
+    """한 실행의 행을 `jsonl.gz`로 내보낸다 (SPEC §7.4)."""
+    out_dir.mkdir(parents=True, exist_ok=True)
+    with conn.cursor() as cur:
+        cur.execute("select data_date, profile from kss_runs where run_id = %s", (run_id,))
+        head = cur.fetchone()
+        if head is None:
+            raise ValueError(f"없는 실행: {run_id}")
+        manifest = archive.Manifest(run_id=str(run_id), data_date=head[0].isoformat(),
+                                    profile=str(head[1]))
+        for name, sql in archive.EXPORTS.items():
+            cur.execute(sql, (run_id,))
+            columns = [d.name for d in cur.description or ()]
+            manifest.files.append(
+                archive.write_jsonl_gz(out_dir / f"{name}.jsonl.gz", columns, iter(cur.fetchall()))
+            )
+    conn.rollback()
+    return manifest
+
+
+def record_snapshot(conn: Conn, manifest: archive.Manifest, uri: str | None,
+                    verified: bool) -> str:
+    """아카이브 사실을 남긴다. 같은 내용이면 행이 늘지 않는다."""
+    snapshot_id = manifest.snapshot_id()
+    with conn.cursor() as cur:
+        cur.execute(
+            "insert into kss_input_snapshots (snapshot_id, run_id, data_date, profile, manifest, "
+            "archive_uri, rows, bytes, verified_at) "
+            "values (%s, %s, %s, %s, %s, %s, %s, %s, case when %s then now() end) "
+            "on conflict (snapshot_id) do update set archive_uri = coalesce("
+            "excluded.archive_uri, kss_input_snapshots.archive_uri), "
+            "verified_at = coalesce(excluded.verified_at, kss_input_snapshots.verified_at)",
+            (snapshot_id, UUID(manifest.run_id), date.fromisoformat(manifest.data_date),
+             manifest.profile, _json(manifest.as_dict()), uri, manifest.rows, manifest.bytes,
+             verified),
+        )
+    conn.commit()
+    return snapshot_id
+
+
+def archivable_runs(conn: Conn, cutoff: date) -> list[UUID]:
+    """보존 경계 밖이라 **내보낼** 실행.
+
+    아카이브 여부를 여기서 묻지 않는다 — 물으면 첫 아카이브가 영영 일어나지 않는다(2026-09-23).
+    지워도 되는지는 `prune`이 다시 따진다.
+    """
+    with conn.cursor() as cur:
+        cur.execute(
+            "select r.run_id from kss_runs r "
+            "where r.data_date < %s "
+            "  and not exists (select 1 from kss_publications p where p.run_id = r.run_id) "
+            "order by r.data_date",
+            (cutoff,),
+        )
+        rows = [UUID(str(r[0])) for r in cur.fetchall()]
+    conn.rollback()
+    return rows
+
+
+# 갈래 → (표, 실행을 가리키는 열). 유니버스만 `snapshot_id`다
+PRUNE_TABLES = {
+    "parts": ("kss_score_parts", "run_id"),
+    "universe": ("kss_universe_snapshots", "snapshot_id"),
+    "scores": ("kss_scores", "run_id"),
+}
+
+
+def prune(conn: Conn, table_key: str, run_ids: Sequence[UUID]) -> int:
+    """상세를 지운다 — **SPEC §7.4의 세 가지 금지를 SQL이 다시 확인한 것만**.
+
+    부르는 쪽이 이미 걸렀더라도 여기서 한 번 더 본다. 삭제는 되돌릴 수 없고,
+    조건 한 줄이 빠진 채 지나가는 쪽이 훨씬 비싸다.
+
+    - 복원 검증을 통과한 아카이브가 있어야 한다
+    - 게시본이 가리키는 실행은 지우지 않는다
+
+    **미해결 위험은 여기서 막지 않는다.** SPEC §7.4의 「미해결 위험은 제거하지 않는다」는
+    위험 사건과 그 근거 공시를 지키라는 말이고, 그것들은 `kss_risk_events`·`kss_disclosures`에
+    있으며 애초에 삭제 대상이 아니다(`PRUNE_TABLES` 참조). 이를 실행 단위 조건으로 적었더니
+    미해결 위험이 있는 종목이 하나라도 든 실행이 전부 막혀 **아무것도 지워지지 않았다**
+    (2026-09-23 실측: 827건이 열려 있어 모든 실행이 대상에서 빠졌다).
+    """
+    if not run_ids:
+        return 0
+    table, column = PRUNE_TABLES[table_key]
+    with conn.cursor() as cur:
+        cur.execute(
+            f"delete from {table} d where d.{column} = any(%s) "
+            f"  and exists (select 1 from kss_input_snapshots s "
+            f"              where s.run_id = d.{column} and s.verified_at is not null) "
+            f"  and not exists (select 1 from kss_publications p where p.run_id = d.{column})",
+            (list(run_ids),),
+        )
+        deleted = int(cur.rowcount)
+    conn.commit()
+    return deleted

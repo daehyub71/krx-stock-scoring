@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 import re
+from datetime import date
 from pathlib import Path
 
 import pytest
@@ -22,6 +23,15 @@ M1_TABLES = {
     "kss_sector_stats", "kss_financial_versions", "kss_corp_map",
 }
 
+# M3 — 공시·사전·뉴스 (SPEC §5.5 · §7.2)
+M3_TABLES = {
+    "kss_disclosures", "kss_risk_events", "kss_lexicon", "kss_lexicon_versions",
+    "kss_news_observations",
+}
+
+# M4 — 입력 스냅샷·아카이브 (SPEC §7.4)
+M4_TABLES = {"kss_input_snapshots"}
+
 
 def _check_values(name: str) -> set[str]:
     m = re.search(rf"constraint {name} check \((\w+) in \((.*?)\)\)", SQL, re.S)
@@ -30,7 +40,23 @@ def _check_values(name: str) -> set[str]:
 
 
 def test_schema_has_m1_tables() -> None:
-    assert set(TABLES) == M1_TABLES
+    assert set(TABLES) >= M1_TABLES
+
+
+def test_schema_has_m3_tables() -> None:
+    assert set(TABLES) == M1_TABLES | M3_TABLES | M4_TABLES
+
+
+def test_schema_risk_events_keep_the_lexicon_version() -> None:
+    """사전을 고쳐도 과거 판정이 덮이지 않는다 — 버전이 키에 들어간다 (SPEC §5.5)."""
+    body = re.search(r"create table if not exists kss_risk_events \((.*?)\n\);", SQL, re.S)
+    assert body and "lexicon_version" in body.group(1)
+    assert "primary key (ticker, rcept_no, rule_id, lexicon_version)" in body.group(1)
+
+
+def test_schema_news_status_values() -> None:
+    assert _check_values("kss_news_status") == {
+        "observed", "no_event", "not_queried", "source_error"}
 
 
 def test_schema_all_tables_prefixed() -> None:
@@ -132,3 +158,24 @@ def test_schema_db_rls_and_policies() -> None:
             "where table_name like 'kss\\_%%' and grantee in ('anon', 'authenticated')"
         )
         assert cur.fetchall() == []
+
+
+def test_source_check_statuses_cover_what_the_gates_emit() -> None:
+    """게이트가 낼 수 있는 상태는 전부 스키마가 받아야 한다.
+
+    2026-09-23: `gate_aux`가 분모를 모를 때 내는 `unknown`이 CHECK에 없어, 그런 날 실행이
+    통째로 깨질 뻔했다. 게이트 쪽만 고치고 스키마를 안 고치면 조용히 되풀이된다.
+    """
+    from scoring.checks import gate_aux, gate_bars
+
+    allowed = _check_values("kss_source_checks_status")
+    t_ = date(2026, 9, 18)
+    emitted = {gate_aux("flows", c, t_)[1].status for c in (
+        {"expected": 100, "stored": 100, "valid": 100},
+        {"expected": 100, "stored": 10, "valid": 10},
+        {"expected": 0, "stored": 0, "valid": 0},
+    )}
+    _, rows = gate_bars({"KOSPI": {"expected": 0, "stored": 0, "valid": 0, "amount_null": 0}},
+                        t_, {}, ())
+    emitted |= {r.status for r in rows}
+    assert emitted <= allowed, f"스키마가 못 받는 상태: {emitted - allowed}"

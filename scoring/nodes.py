@@ -9,14 +9,18 @@ from __future__ import annotations
 import hashlib
 import json
 import time
-from datetime import date
+from datetime import date, datetime, timedelta
 from typing import Any
 
 from scoring import checks, compute
 from scoring.config import load_env
+from scoring.domain.disclosure import DisclosureRow
 from scoring.domain.financial import read_statement
 from scoring.domain.fundamental import MarketData, sector_stats, share_counts, valuation
-from scoring.sources import dart, upstream
+from scoring.domain.lexicon import from_rules, news_lexicon
+from scoring.domain.news import Article
+from scoring.sources import dart, naver, upstream
+from scoring.sources import disclosure as disclosure_src
 from scoring.sources.corp import parse_corp_codes
 from scoring.sources.dart_fin import fetch_reports
 from scoring.sources.krx import fetch_dividends
@@ -66,9 +70,23 @@ def gate(state: RunState, ctx: RunContext) -> RunState:
     window = ctx.rules.section("technical")["window_sessions"]
     recent = tuple(d for d in ctx.calendar.mismatch if d >= ctx.calendar.cal.sessions[-window])
     ok, rows = checks.gate_bars(counts, t, meta, recent)
+
+    # 보조 갈래는 **막지 않는다** — 모자라면 degraded로 게시한다 (SPEC §6.3)
+    aux_ok = True
+    for source, c in upstream.aux_counts(ctx.upstream, t).items():
+        passed, check = checks.gate_aux(source, c, t)
+        aux_ok &= passed
+        rows.append(check)
+    ctx.upstream.rollback()
+
     if ctx.run_id is not None:
         writer.write_source_checks(_kss(ctx), ctx.run_id, rows)
-    return {"gate_ok": ok, "stats": {"gate": {c.market: c.coverage for c in rows if c.coverage}}}
+    decision = checks.publish_decision(ok, aux_ok)
+    return {
+        "gate_ok": ok,
+        "publish_decision": decision,
+        "stats": {"gate": {f"{c.source}:{c.market}": c.coverage for c in rows if c.coverage}},
+    }
 
 
 def route_after_gate(state: RunState) -> str:
@@ -97,6 +115,10 @@ def load(state: RunState, ctx: RunContext) -> RunState:
         started = time.monotonic()
         ctx.fundamentals = _load_fundamentals(ctx)
         _timed(ctx, "load_fundamentals", started)
+    if state["profile"] == "common":
+        started = time.monotonic()
+        ctx.events = _load_events(ctx, state)
+        _timed(ctx, "load_events", started)
     if ctx.run_id is not None:
         writer.update_run(_kss(ctx), ctx.run_id, "computing")
     return {}
@@ -182,12 +204,119 @@ def _load_fundamentals(ctx: RunContext) -> compute.Fundamentals:
                                 corp_map=corp_map, report_versions=tuple(versions.values()))
 
 
+# ── M3 공시·뉴스 ────────────────────────────────────────────────
+
+# 이미 받은 날도 이만큼은 다시 훑는다 — 늦게 접수되거나 정정된 공시를 놓치지 않기 위해 (SPEC §5.5)
+DISCLOSURE_REFETCH_DAYS = 2
+
+
+def _sync_disclosures(ctx: RunContext, t: date, window_days: int) -> int:
+    """창에 필요한 공시를 DART에서 받아 `kss_disclosures`에 쌓는다.
+
+    공시는 불변이라 매번 30일을 다시 받을 이유가 없다. 저장된 마지막 접수일에서 이어 받되,
+    최근 며칠은 겹쳐 다시 훑는다.
+
+    Returns:
+        이번에 받은 행 수.
+    """
+    start = t - timedelta(days=window_days - 1)
+    kss = _kss(ctx)
+    with kss.cursor() as cur:
+        cur.execute("select max(rcept_dt) from kss_disclosures")
+        row = cur.fetchone()
+    last = row[0] if row and row[0] else None
+    since = max(start, last - timedelta(days=DISCLOSURE_REFETCH_DAYS)) if last else start
+    records = disclosure_src.fetch_days(since, t)
+    ctx.dart_calls += 1
+    rows = [
+        (r.rcept_no, r.corp_code, r.stock_code, r.corp_name, r.corp_cls, r.report_nm,
+         r.rcept_dt, r.flr_nm, r.rm, r.norm_name, r.corrected, r.note)
+        for r in records
+    ]
+    writer.write_disclosures(kss, rows)
+    return len(rows)
+
+
+def _read_disclosure_window(
+    ctx: RunContext, t: date, window_days: int
+) -> dict[str, list[DisclosureRow]]:
+    """창 안의 공시를 종목별로 읽는다 (상장 종목코드가 있는 것만)."""
+    start = t - timedelta(days=window_days - 1)
+    out: dict[str, list[DisclosureRow]] = {}
+    with _kss(ctx).cursor() as cur:
+        cur.execute(
+            "select stock_code, rcept_no, rcept_dt, report_nm from kss_disclosures "
+            "where rcept_dt between %s and %s and stock_code <> '' order by rcept_dt",
+            (start, t))
+        for stock, rcept_no, rcept_dt, report_nm in cur.fetchall():
+            out.setdefault(str(stock), []).append(
+                DisclosureRow(rcept_no=str(rcept_no), rcept_dt=rcept_dt, report_nm=str(report_nm)))
+    return out
+
+
+# 종목 사이 간격. 붙여서 2,585회를 돌리면 지속 호출로 막힌다 (2026-09-23 실측 815종목 실패).
+# 호출 자체가 90~135ms라 이 값이면 초당 6~7회다.
+NEWS_DELAY = 0.05
+
+
+def _fetch_news(
+    ctx: RunContext, env: dict[str, str]
+) -> tuple[dict[str, list[Article]], dict[str, str]]:
+    """전 종목 뉴스. 한 종목이 실패해도 나머지는 계속한다 — 상태로 남긴다."""
+    assert ctx.snapshot is not None
+    articles: dict[str, list[Article]] = {}
+    status: dict[str, str] = {}
+    for meta in ctx.snapshot.tickers:
+        try:
+            articles[meta.ticker] = naver.search_news(meta.name, env=env)
+            status[meta.ticker] = "observed"
+        except naver.NaverError:
+            status[meta.ticker] = "source_error"
+        time.sleep(NEWS_DELAY)
+    return articles, status
+
+
+def _load_events(ctx: RunContext, state: RunState) -> compute.Events:
+    """공시·뉴스 입력을 모은다 (common 프로필)."""
+    assert ctx.snapshot is not None
+    t = ctx.snapshot.t
+    window_days = int(ctx.rules.item("disc.dart").params["window_days"])
+    disc_lex, news_lex = from_rules(), news_lexicon()
+    if not state.get("dry_run") and ctx.kss is not None:
+        writer.write_lexicon_version(_kss(ctx), disc_lex.version, "disclosure", disc_lex.entries())
+        writer.write_lexicon_version(_kss(ctx), news_lex.version, "news", news_lex.entries())
+        fetched = _sync_disclosures(ctx, t, window_days)
+        ctx.timings["disclosures_fetched"] = float(fetched)
+        disclosures = _read_disclosure_window(ctx, t, window_days)
+    else:
+        disclosures = {}
+    # 창의 끝은 T의 자정이 아니라 **실행 시각**이다 (SPEC §5.1·§5.5).
+    # 네이버는 최신순 20건만 주고 날짜 조건이 없어서, T 자정으로 자르면 활발한 종목은
+    # 받은 20건이 전부 창 밖으로 나간다 (2026-09-23 실측: 4종목 모두 fetched 20 · in_window 0).
+    cutoff = datetime.now().replace(microsecond=0)
+    lag_days = int(ctx.rules.item("news.naver").params.get("max_lag_days", 3))
+    backdated = (cutoff.date() - t).days > lag_days
+    env = load_env()
+    if backdated:
+        # 소급 실행 — 그 시점 기사를 받을 방법이 없다. 오늘 기사로 과거 점수를 만들지 않는다
+        articles: dict[str, list[Article]] = {}
+        status = {meta.ticker: "not_queried" for meta in ctx.snapshot.tickers}
+    else:
+        articles, status = _fetch_news(ctx, env)
+    return compute.Events(
+        disclosures=disclosures, disclosure_lexicon=disc_lex,
+        news=articles, news_status=status, news_lexicon=news_lex,
+        cutoff=cutoff,
+        disclosure_queried=bool(disclosures) or not state.get("dry_run", False),
+    )
+
+
 def compute_scores(state: RunState, ctx: RunContext) -> RunState:
     """전 종목 계산."""
     assert ctx.snapshot is not None
     started = time.monotonic()
     ctx.results = compute.compute_scores(ctx.snapshot, ctx.rules, state["profile"],
-                                         ctx.fundamentals)
+                                         ctx.fundamentals, ctx.events)
     _timed(ctx, "compute", started)
     return {}
 
@@ -223,11 +352,51 @@ def persist(state: RunState, ctx: RunContext) -> RunState:
         writer.write_sector_stats(kss, ctx.run_id, f.stats.rows())
         writer.write_financial_versions(kss, f.report_versions)
         writer.write_corp_map(kss, f.corp_map_version, f.corp_map)
+    if ctx.events is not None:
+        _persist_events(ctx, kss)
     stored = writer.count_rows(kss, ctx.run_id)
     if stored != written:
         raise compute.ValidationError(f"저장 행 수 불일치: 기대 {written}, 실제 {stored}")
     _timed(ctx, "persist", started)
     return {"stats": {**state.get("stats", {}), "written": written}}
+
+
+def _persist_events(ctx: RunContext, kss: Any) -> None:
+    """판정된 공시 사건과 뉴스 관측을 남긴다 (M3).
+
+    사건은 **사전 버전과 함께** 쌓는다 — 사전을 고쳐도 과거 판정이 덮이지 않는다.
+    뉴스는 점수에 쓴 기사만 담는다. 미조회·실패도 그대로 상태로 남긴다.
+    """
+    assert ctx.events is not None and ctx.results is not None and ctx.run_id is not None
+    ev = ctx.events
+    risk_rows: list[tuple[Any, ...]] = []
+    news_rows: list[tuple[Any, ...]] = []
+    for result in ctx.results:
+        ticker = result.entry.meta.ticker
+        for part in result.parts:
+            if part.item == "disc.dart":
+                for e in part.actual.get("events", []):
+                    risk_rows.append((
+                        ticker, e["rcept_no"], e["rule"], ev.disclosure_lexicon.version,
+                        e["level"], e["fatal"], e["subsidiary"], date.fromisoformat(e["rcept_dt"]),
+                    ))
+            elif part.item == "news.naver":
+                window = part.actual.get("window") or [None, None]
+                status = ("not_queried" if part.missing_reason == "not_queried"
+                          else "source_error" if part.missing_reason == "source_error"
+                          else part.state if part.state == "no_event" else "observed")
+                news_rows.append((
+                    ticker, status, result.entry.meta.name,
+                    date.fromisoformat(window[0]) if window[0] else None,
+                    date.fromisoformat(window[1]) if window[1] else None,
+                    writer.json_value(part.actual.get("articles", [])),
+                    part.points,
+                    part.actual.get("lexicon_version"),
+                    part.note,
+                ))
+    writer.write_risk_events(kss, risk_rows)
+    writer.write_news_observations(kss, ctx.run_id, news_rows)
+    ctx.timings["risk_events"] = float(len(risk_rows))
 
 
 def publish(state: RunState, ctx: RunContext) -> RunState:
@@ -237,11 +406,13 @@ def publish(state: RunState, ctx: RunContext) -> RunState:
     assert ctx.snapshot is not None
     stats = {**state.get("stats", {}), "timings": ctx.timings}
     writer.update_run(_kss(ctx), ctx.run_id, "validating", stats=stats)
+    degraded = state.get("publish_decision") == "publish_degraded"
+    status = "published_degraded" if degraded else "published"
     ctx.published_at = writer.publish(
-        _kss(ctx), ctx.run_id, ctx.snapshot.t, state["profile"], "published",
-        reason=f"{state.get('trigger', 'manual')} run",
+        _kss(ctx), ctx.run_id, ctx.snapshot.t, state["profile"], status,
+        reason=f"{state.get('trigger', 'manual')} run" + (" (보조 갈래 부족)" if degraded else ""),
     )
-    return {"status": "published"}
+    return {"status": status}
 
 
 def cross(state: RunState, ctx: RunContext) -> RunState:

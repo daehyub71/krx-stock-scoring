@@ -66,7 +66,7 @@ create table if not exists kss_source_checks (
   status           text not null,
   reason           text,
   primary key (run_id, source, market),
-  constraint kss_source_checks_status check (status in ('ok', 'degraded', 'failed', 'skipped'))
+  constraint kss_source_checks_status check (status in ('ok', 'degraded', 'failed', 'skipped', 'unknown'))
 );
 
 -- 당일 유니버스·분류 스냅샷 (snapshot_id = run_id, M1)
@@ -236,11 +236,120 @@ create table if not exists kss_signal_cross (
   constraint kss_signal_cross_mode check (comparison_mode in ('partial_technical', 'same_data_date'))
 );
 
+
+-- ───────────────────────── 공시·사전·뉴스 (M3, SPEC §5.5) ─────────────────────────
+-- 날짜축으로 받은 공시 원본. `last_reprt_at=N`이라 정정 전 원본도 남는다.
+-- **판정은 여기 두지 않는다** — 사전을 고치면 판정이 달라지므로 판정은 실행 단위(kss_risk_events)에 쌓는다.
+create table if not exists kss_disclosures (
+  rcept_no      text primary key,
+  corp_code     text not null,
+  stock_code    text,                        -- 상장사가 아니면 빈 값이 온다
+  corp_name     text not null,
+  corp_cls      text not null,               -- Y(유가) / K(코스닥)
+  report_nm     text not null,
+  rcept_dt      date not null,
+  flr_nm        text,
+  rm            text,
+  norm_name     text not null,               -- 정규화 제목 (접두·공백 제거)
+  corrected     boolean not null default false,
+  note          text not null default '',    -- 제목 뒤 괄호 설명 (감사의견이 여기로 온다)
+  first_seen_at timestamptz not null default now(),
+  fetched_at    timestamptz not null default now(),
+  constraint kss_disclosures_cls check (corp_cls in ('Y', 'K'))
+);
+create index if not exists kss_disclosures_dt on kss_disclosures (rcept_dt desc);
+create index if not exists kss_disclosures_stock on kss_disclosures (stock_code, rcept_dt desc);
+
+-- 판정된 사건. 창에서 빠졌다는 이유로 미해결 위험을 지우지 않는다 — 해제는 근거와 함께 남긴다 (SPEC §4.4)
+create table if not exists kss_risk_events (
+  ticker           text not null,
+  rcept_no         text not null references kss_disclosures(rcept_no) on delete cascade,
+  rule_id          text not null,
+  lexicon_version  text not null,
+  level            text not null,            -- red / amber / positive
+  fatal            boolean not null default false,
+  subsidiary       boolean not null default false,
+  rcept_dt         date not null,
+  first_seen_at    timestamptz not null default now(),
+  cleared_at       timestamptz,
+  cleared_rcept_no text,                     -- 해제를 알린 공시
+  cleared_reason   text,
+  primary key (ticker, rcept_no, rule_id, lexicon_version),
+  constraint kss_risk_events_level check (level in ('red', 'amber', 'positive'))
+);
+create index if not exists kss_risk_events_open on kss_risk_events (ticker, rcept_dt desc)
+  where cleared_at is null;
+
+-- 사전 편집 원본 (SPEC §5.5). 삭제하지 않는다 — enabled=false로 내린다
+create table if not exists kss_lexicon (
+  term_id    bigserial primary key,
+  term       text not null,                  -- 사람이 읽는 원문
+  norm       text not null,                  -- 정규화 키워드 (공백 제거)
+  polarity   text not null,                  -- positive / negative / fatal
+  weight     numeric(4, 2) not null default 1,
+  scope      text not null,                  -- disclosure / news
+  exclude    text[] not null default '{}',
+  priority   integer not null default 100,   -- 작을수록 먼저 본다
+  on_note    boolean not null default false, -- 제목 뒤 설명까지 볼 것인가
+  enabled    boolean not null default true,
+  note       text not null default '',
+  updated_at timestamptz not null default now(),
+  unique (norm, scope, polarity),
+  constraint kss_lexicon_polarity check (polarity in ('positive', 'negative', 'fatal')),
+  constraint kss_lexicon_scope check (scope in ('disclosure', 'news'))
+);
+
+-- 불변 스냅샷 — 배치가 시작되면 사전이 고정된다. 같은 내용이면 행이 늘지 않는다
+create table if not exists kss_lexicon_versions (
+  lexicon_version text primary key,          -- entries 정규 해시
+  scope           text not null,
+  entry_count     integer not null,
+  entries         jsonb not null,
+  created_at      timestamptz not null default now(),
+  constraint kss_lexicon_versions_scope check (scope in ('disclosure', 'news'))
+);
+
+-- 뉴스 관측 (SPEC §5.5) — 미조회·실패·기사 없음을 섞지 않는다
+create table if not exists kss_news_observations (
+  run_id          uuid not null references kss_runs(run_id) on delete cascade,
+  ticker          text not null,
+  status          text not null,             -- observed / no_event / not_queried / source_error
+  query           text,
+  window_from     date,
+  window_to       date,
+  articles        jsonb not null default '[]'::jsonb,  -- 제목·링크·발행시각·판정·선정 근거
+  points          numeric(4, 1),
+  lexicon_version text,
+  note            text,
+  fetched_at      timestamptz not null default now(),
+  primary key (run_id, ticker),
+  constraint kss_news_status check (status in ('observed', 'no_event', 'not_queried', 'source_error'))
+);
+
+
+-- 입력 스냅샷·아카이브 (M4, SPEC §7.2 · §7.4)
+-- 오래된 근거를 지우기 전에 **여기 행이 있어야 한다** — manifest와 해시가 복원 가능함을 증명한다.
+create table if not exists kss_input_snapshots (
+  snapshot_id  text primary key,                    -- manifest 내용 해시
+  run_id       uuid not null references kss_runs(run_id) on delete cascade,
+  data_date    date not null,
+  profile      text not null,
+  manifest     jsonb not null,                      -- 파일별 행 수·sha256·바이트
+  archive_uri  text,                                -- 업로드 위치 (없으면 아직 로컬)
+  rows         integer not null,
+  bytes        bigint not null,
+  verified_at  timestamptz,                         -- 복원 검증을 통과한 시각
+  created_at   timestamptz not null default now()
+);
+create index if not exists kss_input_snapshots_date on kss_input_snapshots (data_date desc);
+
 -- ───────────────────────── 권한 ─────────────────────────
 -- Supabase 기본 권한이 public 스키마 새 표를 anon·authenticated에 열어 둔다 → 표마다 회수한다.
 revoke all on kss_runs, kss_source_checks, kss_universe_snapshots, kss_scores,
               kss_score_parts, kss_publications, kss_publication_history, kss_signal_cross,
-              kss_sector_stats, kss_financial_versions, kss_corp_map
+              kss_sector_stats, kss_financial_versions, kss_corp_map,
+              kss_disclosures, kss_risk_events, kss_lexicon, kss_lexicon_versions,
+              kss_news_observations, kss_input_snapshots
   from anon, authenticated;
 
 alter table kss_runs                enable row level security;
@@ -254,14 +363,23 @@ alter table kss_signal_cross        enable row level security;
 alter table kss_sector_stats        enable row level security;
 alter table kss_financial_versions  enable row level security;
 alter table kss_corp_map            enable row level security;
+alter table kss_disclosures         enable row level security;
+alter table kss_risk_events         enable row level security;
+alter table kss_lexicon             enable row level security;
+alter table kss_lexicon_versions    enable row level security;
+alter table kss_news_observations   enable row level security;
+alter table kss_input_snapshots     enable row level security;
 
 -- kss_batch: 필요한 쓰기만. 삭제는 근거 보존 정리(parts)에만
 grant select, insert, update on kss_runs, kss_source_checks, kss_universe_snapshots,
                                kss_scores, kss_score_parts, kss_publications,
                                kss_publication_history, kss_signal_cross,
                                kss_sector_stats, kss_financial_versions,
-                               kss_corp_map to kss_batch;
-grant delete on kss_score_parts, kss_publications, kss_signal_cross to kss_batch;
+                               kss_corp_map, kss_disclosures, kss_risk_events,
+                               kss_lexicon, kss_lexicon_versions,
+                               kss_news_observations, kss_input_snapshots to kss_batch;
+grant delete on kss_score_parts, kss_publications, kss_signal_cross,
+                kss_scores, kss_universe_snapshots to kss_batch;
 
 drop policy if exists kss_runs_batch on kss_runs;
 drop policy if exists kss_source_checks_batch on kss_source_checks;
@@ -274,6 +392,12 @@ drop policy if exists kss_cross_batch on kss_signal_cross;
 drop policy if exists kss_sector_stats_batch on kss_sector_stats;
 drop policy if exists kss_fin_versions_batch on kss_financial_versions;
 drop policy if exists kss_corp_map_batch on kss_corp_map;
+drop policy if exists kss_disclosures_batch on kss_disclosures;
+drop policy if exists kss_risk_events_batch on kss_risk_events;
+drop policy if exists kss_lexicon_batch on kss_lexicon;
+drop policy if exists kss_lexicon_versions_batch on kss_lexicon_versions;
+drop policy if exists kss_news_batch on kss_news_observations;
+drop policy if exists kss_snapshots_batch on kss_input_snapshots;
 create policy kss_runs_batch          on kss_runs                for all to kss_batch using (true) with check (true);
 create policy kss_source_checks_batch on kss_source_checks       for all to kss_batch using (true) with check (true);
 create policy kss_universe_batch      on kss_universe_snapshots  for all to kss_batch using (true) with check (true);
@@ -285,10 +409,17 @@ create policy kss_cross_batch         on kss_signal_cross        for all to kss_
 create policy kss_sector_stats_batch  on kss_sector_stats        for all to kss_batch using (true) with check (true);
 create policy kss_fin_versions_batch  on kss_financial_versions  for all to kss_batch using (true) with check (true);
 create policy kss_corp_map_batch      on kss_corp_map            for all to kss_batch using (true) with check (true);
+create policy kss_disclosures_batch   on kss_disclosures         for all to kss_batch using (true) with check (true);
+create policy kss_risk_events_batch   on kss_risk_events         for all to kss_batch using (true) with check (true);
+create policy kss_lexicon_batch       on kss_lexicon             for all to kss_batch using (true) with check (true);
+create policy kss_lexicon_versions_batch on kss_lexicon_versions  for all to kss_batch using (true) with check (true);
+create policy kss_news_batch          on kss_news_observations   for all to kss_batch using (true) with check (true);
+create policy kss_snapshots_batch     on kss_input_snapshots     for all to kss_batch using (true) with check (true);
 
 -- kss_reader: SELECT만, 그리고 게시된 run의 행만 (SPEC N11)
 grant select on kss_runs, kss_source_checks, kss_scores, kss_score_parts,
-                kss_publications, kss_signal_cross, kss_sector_stats to kss_reader;
+                kss_publications, kss_signal_cross, kss_sector_stats,
+                kss_disclosures, kss_risk_events, kss_lexicon, kss_news_observations to kss_reader;
 
 drop policy if exists kss_publications_reader on kss_publications;
 drop policy if exists kss_runs_reader on kss_runs;
@@ -310,3 +441,14 @@ create policy kss_cross_reader on kss_signal_cross for select to kss_reader
   using (exists (select 1 from kss_publications p where p.run_id = kss_signal_cross.score_run_id));
 create policy kss_sector_stats_reader on kss_sector_stats for select to kss_reader
   using (exists (select 1 from kss_publications p where p.run_id = kss_sector_stats.run_id));
+
+-- 공시·사전은 게시본과 무관한 참고 자료다 — 원본 그대로 읽힌다. 뉴스 관측만 게시된 run으로 막는다
+drop policy if exists kss_disclosures_reader on kss_disclosures;
+drop policy if exists kss_risk_events_reader on kss_risk_events;
+drop policy if exists kss_lexicon_reader on kss_lexicon;
+drop policy if exists kss_news_reader on kss_news_observations;
+create policy kss_disclosures_reader on kss_disclosures for select to kss_reader using (true);
+create policy kss_risk_events_reader on kss_risk_events for select to kss_reader using (true);
+create policy kss_lexicon_reader     on kss_lexicon     for select to kss_reader using (true);
+create policy kss_news_reader on kss_news_observations for select to kss_reader
+  using (exists (select 1 from kss_publications p where p.run_id = kss_news_observations.run_id));

@@ -1,0 +1,2114 @@
+# 뉴스 제목 라벨링 — 2026-09-22 표본 300건 (SPEC D7)
+#
+# 대상: 사전에 걸리지 않아 **중립으로 빠진** 2,358건 중 무작위 300건 (seed 20260923).
+# 라벨은 Claude가 1차로 달았다 — 검토·수정용이다.
+#
+# 기준
+#   positive  회사의 사업·실적·주주가치에 좋은 사실 (수주·계약·허가·특허·자사주 소각·실적 개선)
+#   negative  나쁜 사실 (희석·차입·소송/제재·상폐·적자·내부자 매도·오너 리스크)
+#   neutral   행사·홍보·인물·수상·ESG·나열 기사, 그리고 **주가 등락만 전하는 기사**
+#
+# 주가 등락 기사를 중립으로 둔 이유: 가격은 기술 35점이 이미 보고 있다.
+# 뉴스 축까지 같은 것을 세면 한 사실이 두 번 점수가 된다.
+
+# 분포: positive 72 · negative 29 · neutral 199
+
+[[sample]]
+no = 1
+ticker = "143160"
+name = "아이디스"
+title = "아이디스파워텔, 서울 자율방범대에 LTE 무전기 지원"
+label = "neutral"
+
+[[sample]]
+no = 2
+ticker = "069960"
+name = "현대백화점"
+title = "현대백화점, 추석 선물세트 당일 배송 서비스 운영"
+label = "neutral"
+
+[[sample]]
+no = 3
+ticker = "092870"
+name = "엑시콘"
+title = "[특징주] 엑시콘, AI 서버 확대와 CXL 2.0 테스터 양산 공급 기대감에 급..."
+label = "positive"
+
+[[sample]]
+no = 4
+ticker = "194480"
+name = "데브시스터즈"
+title = "[오늘의 게임] 연휴 앞두고 업데이트 진행…데브시스터즈·컴투스·펄어..."
+label = "neutral"
+
+[[sample]]
+no = 5
+ticker = "069640"
+name = "한세엠케이"
+title = "한세엠케이 NBA키즈, 26FW 풋웨어 사업 확대"
+label = "positive"
+
+[[sample]]
+no = 6
+ticker = "250930"
+name = "예선테크"
+title = "'1300도 화염도 끄떡없다'…예선테크, 'KES 이노베이션 어워즈' 부품소재..."
+label = "neutral"
+
+[[sample]]
+no = 7
+ticker = "354200"
+name = "엔젠바이오"
+title = "엔젠바이오, NGS 분석 SW 'NGAS 2.0' 출시…'유료 공급'"
+label = "positive"
+
+[[sample]]
+no = 8
+ticker = "053030"
+name = "바이넥스"
+title = "바이넥스, '알짜 의약품'에 바이오 CDMO까지…두 엔진이 뛴다"
+label = "neutral"
+
+[[sample]]
+no = 9
+ticker = "001770"
+name = "SHD"
+title = "[공시] SHD·동국S&C·퓨쳐켐 '공매도 금지', 아이티센피엔에스·인피니..."
+label = "neutral"
+
+[[sample]]
+no = 10
+ticker = "002630"
+name = "오리엔트바이오"
+title = "오리엔트바이오, 2대1 무상감자 완료…거래 재개"
+label = "negative"
+
+[[sample]]
+no = 11
+ticker = "394280"
+name = "오픈엣지테크놀로지"
+title = "파두·오픈엣지테크놀로지 동반 방긋… CXL 시스템 반도체 IP 및 컨트롤..."
+label = "positive"
+
+[[sample]]
+no = 12
+ticker = "056090"
+name = "시지메드텍"
+title = "시지메드텍, K-VIP 선정…호주서 아시아 척추 전문의 실습 교육"
+label = "neutral"
+
+[[sample]]
+no = 13
+ticker = "389470"
+name = "인벤티지랩"
+title = "인벤티지랩, 장기지속형 날트렉손 주사제 美 특허 등록결정"
+label = "positive"
+
+[[sample]]
+no = 14
+ticker = "005290"
+name = "동진쎄미켐"
+title = "동진쎄미켐 美 신너 생산 본격화…삼성 테일러팹 가동 채비 속도 [비즈..."
+label = "positive"
+
+[[sample]]
+no = 15
+ticker = "337930"
+name = "젝시믹스"
+title = "[A오늘의 유통] 젝시믹스·SSG닷컴·시몬스 外"
+label = "neutral"
+
+[[sample]]
+no = 16
+ticker = "009450"
+name = "경동나비엔"
+title = "[PICK 경동나비엔] ③'수소 100% 시대' 친환경 에너지 솔루션의 진화"
+label = "neutral"
+
+[[sample]]
+no = 17
+ticker = "005750"
+name = "대림바스"
+title = "대림바스, 일체형비데 '뒷면막음 구조' 특허 출원"
+label = "positive"
+
+[[sample]]
+no = 18
+ticker = "118990"
+name = "모트렉스"
+title = "모트렉스이에프엠 청주 공장, 추석맞이 혜능보육원 간식 나눔"
+label = "neutral"
+
+[[sample]]
+no = 19
+ticker = "062040"
+name = "산일전기"
+title = "산일전기 주가, 9월 22일 장중 209,500원 2.20% 상승"
+label = "neutral"
+
+[[sample]]
+no = 20
+ticker = "002380"
+name = "KCC"
+title = "삼전·닉스 '선한 영향력' 시즌2...에코플랜트 발주, KCC도 덩달아 호재"
+label = "positive"
+
+[[sample]]
+no = 21
+ticker = "475040"
+name = "스트라드비젼"
+title = "[AIF2026] 스트라드비젼 '피지컬 AI 경쟁력, 데이터가 만든다'"
+label = "neutral"
+
+[[sample]]
+no = 22
+ticker = "192440"
+name = "슈피겐코리아"
+title = "슈피겐코리아, 초기 투자한 라엘 약 4000억 규모로 매각… ‘엑시트’이..."
+label = "positive"
+
+[[sample]]
+no = 23
+ticker = "131100"
+name = "티엔엔터테인먼트"
+title = "티엔엔터테인먼트 주가, 상한가... 무슨 회사 길래?"
+label = "neutral"
+
+[[sample]]
+no = 24
+ticker = "000320"
+name = "노루홀딩스"
+title = "노루홀딩스·특구재단, 화이트 바이오 생태계 구축"
+label = "neutral"
+
+[[sample]]
+no = 25
+ticker = "049430"
+name = "코메론"
+title = "[리스트] MVP 상위 20선...나이스디앤비, 코메론 등 - 21일"
+label = "neutral"
+
+[[sample]]
+no = 26
+ticker = "468530"
+name = "프로티나"
+title = "프로티나 19% 폭등…4만원 초반서 4만9000원까지"
+label = "neutral"
+
+[[sample]]
+no = 27
+ticker = "206560"
+name = "덱스터"
+title = "덱스터, 영화 '암살자(들)' 색보정·음향 참여…1974년 재현"
+label = "neutral"
+
+[[sample]]
+no = 28
+ticker = "402340"
+name = "SK스퀘어"
+title = "코스피, 소폭 상승에 7000선 유지...삼성전자, SK스퀘어 상승 VS 현대차,..."
+label = "neutral"
+
+[[sample]]
+no = 29
+ticker = "120110"
+name = "코오롱인더"
+title = "'소재로 미래 산업 잇는다'…코오롱인더, 고부가 전환 가속"
+label = "neutral"
+
+[[sample]]
+no = 30
+ticker = "483650"
+name = "달바글로벌"
+title = "달바글로벌 장중 강세…3분기 이익 전망 주목"
+label = "neutral"
+
+[[sample]]
+no = 31
+ticker = "242040"
+name = "나무AX"
+title = "나무AX, GPU부터 AI 에이전트까지 운영 한 번에"
+label = "neutral"
+
+[[sample]]
+no = 32
+ticker = "033170"
+name = "시그네틱스"
+title = "[상한가 종목] 시그네틱스 이어 토마토시스템-스카이랩스 등 마감"
+label = "neutral"
+
+[[sample]]
+no = 33
+ticker = "078590"
+name = "휴림에이텍"
+title = "휴림에이텍, 3년 락업 해제⋯추가 유증 앞두고 수급 변수"
+label = "negative"
+
+[[sample]]
+no = 34
+ticker = "015760"
+name = "한국전력"
+title = "김영록 전 전남지사 한국전력 사장 취업 불승인"
+label = "neutral"
+
+[[sample]]
+no = 35
+ticker = "099430"
+name = "바이오플러스"
+title = "바이오플러스, DVS 가교 기술 기반 HA 필러 개발…MDM® 제조 공정 적용"
+label = "positive"
+
+[[sample]]
+no = 36
+ticker = "383310"
+name = "에코프로에이치엔"
+title = "[공시]에코프로에이치엔, 최대주주 등 지분 변동"
+label = "neutral"
+
+[[sample]]
+no = 37
+ticker = "377220"
+name = "프롬바이오"
+title = "'건강의 가치 나눔으로'…프롬바이오, 정기적 사회공헌 지속"
+label = "neutral"
+
+[[sample]]
+no = 38
+ticker = "139480"
+name = "이마트"
+title = "경기도·이마트 '그냥드림' 6억 후원…친환경 농산물 지원"
+label = "neutral"
+
+[[sample]]
+no = 39
+ticker = "005380"
+name = "현대차"
+title = "현대차, 中 맞춤형 '아이오닉 V' 29일 출시…'가격·AI 승부수'"
+label = "positive"
+
+[[sample]]
+no = 40
+ticker = "084730"
+name = "팅크웨어"
+title = "200m 뒤까지 감지한다…팅크웨어, 라이딩 레이더 '아이나비 TR10' 선봬"
+label = "positive"
+
+[[sample]]
+no = 41
+ticker = "032640"
+name = "LG유플러스"
+title = "'익시오 로밍콜부터 홈캠 Lite까지' LG유플러스, 추석 연휴 생활 밀착형..."
+label = "neutral"
+
+[[sample]]
+no = 42
+ticker = "039740"
+name = "한국정보공학"
+title = "[한국정보공학기술사 보안을 論하다–48] 왜 개인정보 유출사고는 반복..."
+label = "neutral"
+
+[[sample]]
+no = 43
+ticker = "297570"
+name = "아틀라스링크"
+title = "아틀라스링크, 한국파일 지분 확대 '속도'…135억 CB 조달"
+label = "negative"
+
+[[sample]]
+no = 44
+ticker = "381970"
+name = "케이카"
+title = "케이카 '위클리 옥션' 1000회...누적 61.7만대 출품"
+label = "neutral"
+
+[[sample]]
+no = 45
+ticker = "293490"
+name = "카카오게임즈"
+title = "체질 개선 나선 카카오게임즈, ‘도깨비의세계’로 반등 신호탄 쏘나"
+label = "neutral"
+
+[[sample]]
+no = 46
+ticker = "474170"
+name = "루미르"
+title = "[우주항공 룩업] 루미르, 군집위성 사활…K-LEO에 거는 기대"
+label = "neutral"
+
+[[sample]]
+no = 47
+ticker = "007460"
+name = "에이프로젠"
+title = "앱튼, 'GPC-100' 글로벌 3상 본격 착수…에이프로젠 임상팀 가동"
+label = "positive"
+
+[[sample]]
+no = 48
+ticker = "237880"
+name = "클리오"
+title = "[IS포토] 올데이프로젝트, 클리오 풍년다방 에디션 출시 했어요~"
+label = "neutral"
+
+[[sample]]
+no = 49
+ticker = "047040"
+name = "대우건설"
+title = "대우건설·삼성물산·GS건설, 베트남 닌투언 2호기 지분 쟁탈전"
+label = "neutral"
+
+[[sample]]
+no = 50
+ticker = "069510"
+name = "에스텍"
+title = "에스텍시스템, 경희의료원 의료진 대상 호신술 교육"
+label = "neutral"
+
+[[sample]]
+no = 51
+ticker = "072870"
+name = "메가스터디"
+title = "메가스터디교육 김영편입 10월 개강 프로그램 운영.. 과정별 맞춤 커리..."
+label = "neutral"
+
+[[sample]]
+no = 52
+ticker = "068100"
+name = "케이웨더"
+title = "로빈후드부터 케이웨더·트리아까지…'XRP서울 2026' 연사진에"
+label = "neutral"
+
+[[sample]]
+no = 53
+ticker = "232830"
+name = "아이티센피엔에스"
+title = "AI 공격 막아라… 엑스게이트·아이티센피엔에스·에스투더블유 주가 '..."
+label = "neutral"
+
+[[sample]]
+no = 54
+ticker = "035080"
+name = "그래디언트"
+title = "그래디언트 '리앤핏', 올리브영 남포 타운 입점…오프라인 유통 확대"
+label = "positive"
+
+[[sample]]
+no = 55
+ticker = "009240"
+name = "한샘"
+title = "가구 상장기업 2026년 9월 브랜드평판...한샘, 에이스침대, 퍼시스 順"
+label = "neutral"
+
+[[sample]]
+no = 56
+ticker = "071320"
+name = "지역난방공사"
+title = "한국지역난방공사, '개인정보 보호 문화 확산' 캠페인 시행"
+label = "neutral"
+
+[[sample]]
+no = 57
+ticker = "006050"
+name = "국영지앤엠"
+title = "[공시] 국영지앤엠·서울반도체 '공매도 금지', 비트플래닛·기가비스·..."
+label = "neutral"
+
+[[sample]]
+no = 58
+ticker = "443250"
+name = "레뷰코퍼레이션"
+title = "[공시]최대주주 바뀐 레뷰코퍼레이션, 지배구조 재편"
+label = "negative"
+
+[[sample]]
+no = 59
+ticker = "425040"
+name = "티이엠씨"
+title = "티이엠씨 주가, 9월 21일 애프터마켓 12,670원 23.49% 급등"
+label = "neutral"
+
+[[sample]]
+no = 60
+ticker = "279570"
+name = "케이뱅크"
+title = "최우형 케이뱅크 은행장, 불법사금융 피해 방지 캠페인 동참"
+label = "neutral"
+
+[[sample]]
+no = 61
+ticker = "072710"
+name = "농심홀딩스"
+title = "[쩐의흔적] 신동원 회장 아내·두 딸, 농심홀딩스 주식 3억7700만원어치..."
+label = "positive"
+
+[[sample]]
+no = 62
+ticker = "109860"
+name = "동일금속"
+title = "이번엔 거래량 장기미달로 관리종목 지정우려 공시...동일금속, 세원물..."
+label = "negative"
+
+[[sample]]
+no = 63
+ticker = "002030"
+name = "아세아"
+title = "15년째 이어온 생명 나눔…아세아시멘트 제천공장, 가을에도 헌혈"
+label = "neutral"
+
+[[sample]]
+no = 64
+ticker = "477850"
+name = "마키나락스"
+title = "[창간기획]AX 베스트 프랙티스/ 마키나락스, AI OS '런웨이'로 기업 AX 지..."
+label = "neutral"
+
+[[sample]]
+no = 65
+ticker = "094480"
+name = "갤럭시아머니트리"
+title = "갤럭시아메타버스, 갤럭시아머니트리와 기업용 디지털 금융 솔루션 PoC ..."
+label = "neutral"
+
+[[sample]]
+no = 66
+ticker = "393890"
+name = "더블유씨피"
+title = "두산·세아베스틸지주·더블유씨피[하나證 주간추천주]"
+label = "neutral"
+
+[[sample]]
+no = 67
+ticker = "089030"
+name = "테크윙"
+title = "테크윙 주가, 9월 23일 장중 48,350원 1.58% 상승"
+label = "neutral"
+
+[[sample]]
+no = 68
+ticker = "488280"
+name = "에스투더블유"
+title = "AI 공격 막아라… 엑스게이트·아이티센피엔에스·에스투더블유 주가 '..."
+label = "neutral"
+
+[[sample]]
+no = 69
+ticker = "058610"
+name = "에스피지"
+title = "에스피지 주가, 9월 22일 98,800원 1.00% 하락"
+label = "neutral"
+
+[[sample]]
+no = 70
+ticker = "0010F0"
+name = "보원케미칼"
+title = "특수화학 전문 기업 보원케미칼… 차별화 소재 라인업으로 쾌속 질주"
+label = "neutral"
+
+[[sample]]
+no = 71
+ticker = "320000"
+name = "한울반도체"
+title = "[공시]한울소재과학, 한울반도체 신주인수권 매각"
+label = "neutral"
+
+[[sample]]
+no = 72
+ticker = "005500"
+name = "삼진제약"
+title = "강연하는 이수민 삼진제약 연구센터장"
+label = "neutral"
+
+[[sample]]
+no = 73
+ticker = "078520"
+name = "에이블씨엔씨"
+title = "신유정 에이블씨엔씨 대표 '본질 지키며 혁신…미샤, 100년 브랜드 도전..."
+label = "neutral"
+
+[[sample]]
+no = 74
+ticker = "255220"
+name = "SG"
+title = "[지배구조 리포트] [SG그룹] 상장사 지배력에 현금까지…비상장 KM&I '1인..."
+label = "neutral"
+
+[[sample]]
+no = 75
+ticker = "264450"
+name = "유비쿼스"
+title = "유비쿼스, 국내 최초 AI 기반 광통신 장비 자가진단·복구 기술 공개"
+label = "positive"
+
+[[sample]]
+no = 76
+ticker = "011200"
+name = "HMM"
+title = "HMM, 공급망 격랑에 '물류 지선망' 반격…서비스 경쟁력 높인다"
+label = "neutral"
+
+[[sample]]
+no = 77
+ticker = "452430"
+name = "사피엔반도체"
+title = "사피엔반도체, 북미 빅테크 양산 본격화…'전력 절감 20배' CPO로 차세대..."
+label = "positive"
+
+[[sample]]
+no = 78
+ticker = "003620"
+name = "KG모빌리티"
+title = "[CAR 브리프] KG모빌리티ㆍ한국타이어ㆍ벤츠ㆍBMWㆍ렉서스ㆍ폴스타"
+label = "neutral"
+
+[[sample]]
+no = 79
+ticker = "393210"
+name = "토마토시스템"
+title = "토마토시스템 주가, 9월 23일 장중 4,305원 29.86% 상승"
+label = "neutral"
+
+[[sample]]
+no = 80
+ticker = "007390"
+name = "네이처셀"
+title = "네이처셀 2만4900원 약세…조인트스템 미국 허가 전략 점검"
+label = "neutral"
+
+[[sample]]
+no = 81
+ticker = "419050"
+name = "삼기에너지솔루션즈"
+title = "AI 전력난에 ESS 수요 급증…삼기에너지솔루션즈 등 소재·부품주 강세"
+label = "positive"
+
+[[sample]]
+no = 82
+ticker = "001070"
+name = "대한방직"
+title = "착공 기한 임박 '대한방직 개발'··· 전주시 '법적 검토 중'"
+label = "neutral"
+
+[[sample]]
+no = 83
+ticker = "018680"
+name = "서울제약"
+title = "서울제약, 브랜드사 위한 ODF OEM·ODM 및 필름 제형 개발 지원"
+label = "neutral"
+
+[[sample]]
+no = 84
+ticker = "084650"
+name = "랩지노믹스"
+title = "랩지노믹스, 사업 재편 완료 하반기 본격 턴어라운드 시동"
+label = "positive"
+
+[[sample]]
+no = 85
+ticker = "090470"
+name = "제이스로보틱스"
+title = "[주요공시] 삼성물산, 에스엠벡셀, 제이스로보틱스, 셀트리온, 에코프로..."
+label = "neutral"
+
+[[sample]]
+no = 86
+ticker = "002900"
+name = "TYM"
+title = "TYM, 우즈베키스탄 농업부와 'CNG 트랙터' 협력 MOU 체결"
+label = "positive"
+
+[[sample]]
+no = 87
+ticker = "307180"
+name = "아이엘"
+title = "'아이엘로보틱스, 휴머노이드 렌털·RaaS로 사업 다각화'"
+label = "neutral"
+
+[[sample]]
+no = 88
+ticker = "307180"
+name = "아이엘"
+title = "[단독] 아이엘 '車 부품사에 中휴머노이드 첫 공급'"
+label = "positive"
+
+[[sample]]
+no = 89
+ticker = "178320"
+name = "서진시스템"
+title = "서진시스템 주가, 9월 22일 애프터마켓 31,450원 3.23% 하락"
+label = "neutral"
+
+[[sample]]
+no = 90
+ticker = "230240"
+name = "에치에프알"
+title = "국내 주파수 경매에 미국 프론트홀까지…에치에프알 반전 신호"
+label = "neutral"
+
+[[sample]]
+no = 91
+ticker = "005830"
+name = "DB손해보험"
+title = "DB하이텍, DB손해보험 주식 16만8000주 추가 매입"
+label = "positive"
+
+[[sample]]
+no = 92
+ticker = "077970"
+name = "STX엔진"
+title = "중진공-STX엔진, 방산 협력기업 지원"
+label = "neutral"
+
+[[sample]]
+no = 93
+ticker = "043340"
+name = "에쎈테크"
+title = "[주총 포커스] 에쎈테크, 냉매밸브 사업 성장에도…두 번째 액면병합"
+label = "neutral"
+
+[[sample]]
+no = 94
+ticker = "303530"
+name = "이노뎁"
+title = "이노뎁 AI 스마트관제 적용 창녕군, ‘대한민국 지식대상’ 우수상"
+label = "neutral"
+
+[[sample]]
+no = 95
+ticker = "484590"
+name = "삼양컴텍"
+title = "삼양컴텍, 진주에 우주항공소재센터 개소…초고온 소재 사업 본격화"
+label = "positive"
+
+[[sample]]
+no = 96
+ticker = "075130"
+name = "플랜티넷"
+title = "'암호화 도메인 특허' 플랜티넷, 통신망 보안 규격 개편 수혜 지목"
+label = "positive"
+
+[[sample]]
+no = 97
+ticker = "056360"
+name = "코위버"
+title = "코위버 주가, 9월 17일 장중 5,910원 1.55% 상승"
+label = "neutral"
+
+[[sample]]
+no = 98
+ticker = "322510"
+name = "제이엘케이"
+title = "日 뇌졸중 AI 권위자 '제이엘케이 등 韓 의료AI 기술, 일본서 큰 역할'"
+label = "neutral"
+
+[[sample]]
+no = 99
+ticker = "139670"
+name = "키네마스터"
+title = "[공시]솔본, 키네마스터 지분 37.44%로 확대"
+label = "neutral"
+
+[[sample]]
+no = 100
+ticker = "365340"
+name = "성일하이텍"
+title = "이동채 에코프로 회장, 2년 내 성일하이텍 인수 목표…365억 투자"
+label = "positive"
+
+[[sample]]
+no = 101
+ticker = "003540"
+name = "대신증권"
+title = "반도체 소부장부터 위성기업까지 중소형주 8곳, 대신증권 코퍼레이트 데..."
+label = "neutral"
+
+[[sample]]
+no = 102
+ticker = "150900"
+name = "파수AI"
+title = "파수AI, 생성형 AI에 입력하는 기밀정보 유출 차단 기술 공개"
+label = "neutral"
+
+[[sample]]
+no = 103
+ticker = "018250"
+name = "애경산업"
+title = "알뜰폰에 샴푸·세제 묶었다···티플러스, 애경산업과 이색 요금제"
+label = "neutral"
+
+[[sample]]
+no = 104
+ticker = "006340"
+name = "대원전선"
+title = "대원전선 주가, 9월 22일 장중 14,070원 3.91% 상승"
+label = "neutral"
+
+[[sample]]
+no = 105
+ticker = "139480"
+name = "이마트"
+title = "[가치ON] 이마트ㆍ정관장ㆍ코웨이ㆍ한솔페이퍼텍"
+label = "neutral"
+
+[[sample]]
+no = 106
+ticker = "012690"
+name = "모나리자"
+title = "[똑똑한추석] 이마트, 모나리자, 쌍용C&B, 한우자조금, SSG닷컴, KT알파 ..."
+label = "neutral"
+
+[[sample]]
+no = 107
+ticker = "034020"
+name = "두산에너빌리티"
+title = "두산에너빌리티 미국 원전시장 진출 눈앞, 박지원 '추가 협상' 불확실성..."
+label = "neutral"
+
+[[sample]]
+no = 108
+ticker = "029530"
+name = "신도리코"
+title = "신도리코, 단대부고에 비식별화 CCTV 구축…학교 시장 확대 추진"
+label = "positive"
+
+[[sample]]
+no = 109
+ticker = "263800"
+name = "데이타솔루션"
+title = "데이타솔루션, IBM과 '경기과기대 IBM AI 엔드투앤드 해커톤' 개최"
+label = "neutral"
+
+[[sample]]
+no = 110
+ticker = "478340"
+name = "나라스페이스테크놀로지"
+title = "나라스페이스테크놀로지 주가, 9월 18일 애프터마켓 14,130원 2.02% 상승"
+label = "neutral"
+
+[[sample]]
+no = 111
+ticker = "001750"
+name = "한양증권"
+title = "PF로 먹고살던 한양증권, 1조원 대출상품 주선... 사업 다각화 골몰"
+label = "positive"
+
+[[sample]]
+no = 112
+ticker = "178320"
+name = "서진시스템"
+title = "서진시스템 주가, 9월 21일 애프터마켓 32,600원 3.69% 하락"
+label = "neutral"
+
+[[sample]]
+no = 113
+ticker = "088290"
+name = "이원컴포텍"
+title = "'시총 200억 미달' 코스닥 기업 생존문제 현실화…이원컴포텍도 경계선"
+label = "negative"
+
+[[sample]]
+no = 114
+ticker = "460470"
+name = "아이빔테크놀로지"
+title = "아이빔테크놀로지, 약물이 몸속 어디까지 가는지 실시간으로 본다…DDS..."
+label = "neutral"
+
+[[sample]]
+no = 115
+ticker = "0161M0"
+name = "네오사피엔스"
+title = "네오사피엔스 상장 사흘째 17.24% 급락…공모가 대비로는 155% 위"
+label = "neutral"
+
+[[sample]]
+no = 116
+ticker = "261780"
+name = "아리바이오랩"
+title = "아리바이오, 150억 투자해 아리바이오랩 최대주주로"
+label = "positive"
+
+[[sample]]
+no = 117
+ticker = "373160"
+name = "데이원컴퍼니"
+title = "데이원컴퍼니 기업 인공지능 전환 실행 인재 양성 교육 과정 마련"
+label = "neutral"
+
+[[sample]]
+no = 118
+ticker = "010060"
+name = "OCI홀딩스"
+title = "중국산 태양광 퇴출 격랑… OCI홀딩스, 북미 시장 수혜주로 두각"
+label = "positive"
+
+[[sample]]
+no = 119
+ticker = "145990"
+name = "삼양사"
+title = "‘2103억 면제’ 삼양사, 대표는 국감 증인대…공정위 리니언시 문턱 높..."
+label = "negative"
+
+[[sample]]
+no = 120
+ticker = "307280"
+name = "원바이오젠"
+title = "원바이오젠, 구미혜당학교 대상 기업 현장 견학 프로그램 진행"
+label = "neutral"
+
+[[sample]]
+no = 121
+ticker = "373160"
+name = "데이원컴퍼니"
+title = "데이원컴퍼니 'FDE 아카데미'신설…'AX 실행할 인재 육성'"
+label = "neutral"
+
+[[sample]]
+no = 122
+ticker = "383930"
+name = "디티앤씨알오"
+title = "KIMCo재단, 디티앤씨알오와 바이오 창업기업 신약개발 지원 협약 맺어"
+label = "neutral"
+
+[[sample]]
+no = 123
+ticker = "063760"
+name = "이엘피"
+title = "국무총리표창 수상하는 이재혁 이엘피 대표이사"
+label = "neutral"
+
+[[sample]]
+no = 124
+ticker = "033780"
+name = "KT&G"
+title = "KT&G 상상스타트업캠프, 사회문제 푸는 10개 스타트업 한자리에…1700명..."
+label = "neutral"
+
+[[sample]]
+no = 125
+ticker = "144960"
+name = "뉴파워프라즈마"
+title = "뉴파워프라즈마 주가, 9월 22일 장중 12,040원 0.33% 상승"
+label = "neutral"
+
+[[sample]]
+no = 126
+ticker = "006340"
+name = "대원전선"
+title = "거래대금 1000억원 넘긴 대원전선…1만3690원으로 1.11% 상승"
+label = "neutral"
+
+[[sample]]
+no = 127
+ticker = "476060"
+name = "온코닉테라퓨틱스"
+title = "온코닉테라퓨틱스, 中서 자큐보 신규 주사제형 3상 첫 환자 투여"
+label = "positive"
+
+[[sample]]
+no = 128
+ticker = "462870"
+name = "시프트업"
+title = "시프트업 '스텔라 블레이드' 이브, 베요네타로 변신 'TGS' 무대 달궜다"
+label = "neutral"
+
+[[sample]]
+no = 129
+ticker = "066970"
+name = "엘앤에프"
+title = "엘앤에프 소폭 반등…장중 11만2700원 터치"
+label = "neutral"
+
+[[sample]]
+no = 130
+ticker = "348950"
+name = "제이알글로벌리츠"
+title = "제이알글로벌리츠, 감사의견 거절…'상폐사유 해소 나설 것'"
+label = "negative"
+
+[[sample]]
+no = 131
+ticker = "069540"
+name = "빛과전자"
+title = "빛과전자, 자산 3분의1 KH그룹 계열사 땅에 넣고 담보까지 잡혀"
+label = "negative"
+
+[[sample]]
+no = 132
+ticker = "039200"
+name = "오스코텍"
+title = "오스코텍, 주주 측 임시주총 소집 신청…신규 이사 3명 제안"
+label = "negative"
+
+[[sample]]
+no = 133
+ticker = "095340"
+name = "ISC"
+title = "ISC 주가, 9월 23일 장중 208,000원 보합세 유지"
+label = "neutral"
+
+[[sample]]
+no = 134
+ticker = "011170"
+name = "롯데케미칼"
+title = "롯데케미칼, 대대적 해초지 복원 사업 진행"
+label = "neutral"
+
+[[sample]]
+no = 135
+ticker = "017900"
+name = "광전자"
+title = "광전자 주가, 9월 23일 장중 10,250원 0.49% 상승"
+label = "neutral"
+
+[[sample]]
+no = 136
+ticker = "230240"
+name = "에치에프알"
+title = "에치에프알 주가, 9월 17일 장중 12,460원 0.32% 하락"
+label = "neutral"
+
+[[sample]]
+no = 137
+ticker = "058610"
+name = "에스피지"
+title = "정밀감속기 기대 탄 에스피지, 장중 10만원대 안착"
+label = "neutral"
+
+[[sample]]
+no = 138
+ticker = "377300"
+name = "카카오페이"
+title = "'생존 시험대' 오른 카카오페이손보…돌파구는 '장기보험'"
+label = "negative"
+
+[[sample]]
+no = 139
+ticker = "006280"
+name = "녹십자"
+title = "녹십자수의약품, 대학생 서포터즈 'GCVP CREW' 1기 성료"
+label = "neutral"
+
+[[sample]]
+no = 140
+ticker = "064350"
+name = "현대로템"
+title = "현대로템, 獨 철도 박람회서 차세대 고속철 차량 콘셉트 첫 공개"
+label = "positive"
+
+[[sample]]
+no = 141
+ticker = "039570"
+name = "HDC랩스"
+title = "HDC랩스, 제주서 해양 정화 활동...임직원 16명 참여"
+label = "neutral"
+
+[[sample]]
+no = 142
+ticker = "001740"
+name = "SK네트웍스"
+title = "SK네트웍스서비스와 손잡은 에니아이, 조리 로봇 전국 유지보수망 구축..."
+label = "neutral"
+
+[[sample]]
+no = 143
+ticker = "099320"
+name = "쎄트렉아이"
+title = "쎄트렉아이 주가, 9월 17일 장중 78,100원 4.55% 상승"
+label = "neutral"
+
+[[sample]]
+no = 144
+ticker = "058860"
+name = "KTis"
+title = "KTis, 자사주 339만주 소각 결정… 약 99억원 규모"
+label = "positive"
+
+[[sample]]
+no = 145
+ticker = "248070"
+name = "솔루엠"
+title = "솔루엠, ‘그로서리샵 2026’서 ESL·전자종이 사이니지 등 리테일 혁신..."
+label = "neutral"
+
+[[sample]]
+no = 146
+ticker = "237880"
+name = "클리오"
+title = "[IS포토] 올데이프로젝트 베일리-타잔-영서, 클리오 행사 참석"
+label = "neutral"
+
+[[sample]]
+no = 147
+ticker = "204840"
+name = "지엘팜텍"
+title = "지엘팜텍 '후보물질 한계 제제기술로 넘었다'…국산신약 44호 '레코듀' ..."
+label = "positive"
+
+[[sample]]
+no = 148
+ticker = "109070"
+name = "주성코퍼레이션"
+title = "주성코퍼레이션, 최대주주 비앤피주성 지분율 46.27%로 상승"
+label = "positive"
+
+[[sample]]
+no = 149
+ticker = "021040"
+name = "대호특수강"
+title = "대호특수강, 50억 단기차입 결정…재무구조 개선·운영자금 확보"
+label = "negative"
+
+[[sample]]
+no = 150
+ticker = "067080"
+name = "대화제약"
+title = "대화제약 리포락셀 中 로열티 5% 공개…파트너사, 현지생산 추진"
+label = "positive"
+
+[[sample]]
+no = 151
+ticker = "009900"
+name = "명신산업"
+title = "'테슬라 픽' 명신산업…사이버캡 품고 옵티머스 뚫는다"
+label = "positive"
+
+[[sample]]
+no = 152
+ticker = "443250"
+name = "레뷰코퍼레이션"
+title = "레뷰코퍼레이션, 아마존 초청 세미나서 인플루언서 마케팅 통한 미국·..."
+label = "neutral"
+
+[[sample]]
+no = 153
+ticker = "001820"
+name = "삼화콘덴서"
+title = "삼화콘덴서 주가, 9월 23일 장중 146,400원 0.68% 하락"
+label = "neutral"
+
+[[sample]]
+no = 154
+ticker = "484120"
+name = "도우인시스"
+title = "도우인시스 주가, 급등세... 핵심 사업은?"
+label = "neutral"
+
+[[sample]]
+no = 155
+ticker = "264450"
+name = "유비쿼스"
+title = "유비쿼스 주가, 9월 17일 장중 10,320원 0.19% 상승"
+label = "neutral"
+
+[[sample]]
+no = 156
+ticker = "439090"
+name = "마녀공장"
+title = "[가보니] 전세계인 이목 잡았다···마녀공장 성수 팝업 ‘소이빈 방앗..."
+label = "neutral"
+
+[[sample]]
+no = 157
+ticker = "122640"
+name = "예스티"
+title = "평택시, 반도체 장비기업 예스티 방문…'소부장 경쟁력 강화'"
+label = "neutral"
+
+[[sample]]
+no = 158
+ticker = "000640"
+name = "동아쏘시오홀딩스"
+title = "[오늘의 증시일정] 콜마바이오텍·에이프릴바이오·동아쏘시오홀딩스 등"
+label = "neutral"
+
+[[sample]]
+no = 159
+ticker = "065660"
+name = "안트로젠"
+title = "[공시] 안트로젠, '알로스템시트' 美 2상 변경 신청"
+label = "neutral"
+
+[[sample]]
+no = 160
+ticker = "027360"
+name = "아주IB투자"
+title = "아주IB투자 주가, 9월 21일 장중 4,030원 4.27% 상승"
+label = "neutral"
+
+[[sample]]
+no = 161
+ticker = "011040"
+name = "경동제약"
+title = "경동제약 4대 키워드 1년…영업익 3배·700억 공장 속도"
+label = "positive"
+
+[[sample]]
+no = 162
+ticker = "071200"
+name = "인피니트헬스케어"
+title = "건강관리기술 브랜드평판 희비…루닛·씨어스 하락, 인피니트헬스케어..."
+label = "neutral"
+
+[[sample]]
+no = 163
+ticker = "100090"
+name = "SK오션플랜트"
+title = "SK오션플랜트, 하도급법 '상습법위반사업자' 불복했지만 기각"
+label = "negative"
+
+[[sample]]
+no = 164
+ticker = "006040"
+name = "동원산업"
+title = "동원산업, 부산시·대형선망수협과 'K-수산물' 소비 촉진 나선다"
+label = "neutral"
+
+[[sample]]
+no = 165
+ticker = "082640"
+name = "동양생명"
+title = "동양생명, '우리WON하는든든치료비보험' 출시…'검사부터 재활까지 보장..."
+label = "neutral"
+
+[[sample]]
+no = 166
+ticker = "450520"
+name = "인스웨이브"
+title = "인스웨이브, 디지털자산 기반 플랫폼 '내기프트' 숙대순헌황귀비길서 두..."
+label = "neutral"
+
+[[sample]]
+no = 167
+ticker = "013890"
+name = "지누스"
+title = "현대백화점, 지누스 회복 국면으로 실적 반등 예상… 목표주가 17만원"
+label = "positive"
+
+[[sample]]
+no = 168
+ticker = "330590"
+name = "롯데리츠"
+title = "리츠 2026년 9월 브랜드평판... SK리츠, 롯데리츠, 신한알파리츠 順"
+label = "neutral"
+
+[[sample]]
+no = 169
+ticker = "139480"
+name = "이마트"
+title = "[비즈투데이] 이마트, 경기도와 '신선한 그냥드림' 협약"
+label = "neutral"
+
+[[sample]]
+no = 170
+ticker = "001430"
+name = "세아베스틸지주"
+title = "'주문하면 2년 대기' 미쳐버린 美 항공우주 시장…세아베스틸지주가 파..."
+label = "positive"
+
+[[sample]]
+no = 171
+ticker = "093240"
+name = "형지엘리트"
+title = "형지엘리트, 16년째 청소년 국가유산지킴이…한양도성 '게이트플로깅'"
+label = "neutral"
+
+[[sample]]
+no = 172
+ticker = "028100"
+name = "동아지질"
+title = "[공시 Pick] 동아지질 2%대 강세…최대주주 지분 매각설 재부각"
+label = "neutral"
+
+[[sample]]
+no = 173
+ticker = "080220"
+name = "제주반도체"
+title = "제주반도체 주가, 9월 23일 장중 76,600원 1.32% 상승"
+label = "neutral"
+
+[[sample]]
+no = 174
+ticker = "109080"
+name = "옵티시스"
+title = "옵티시스 주가, 9월 17일 장중 9,035원 1.36% 하락"
+label = "neutral"
+
+[[sample]]
+no = 175
+ticker = "096690"
+name = "에이루트"
+title = "에이루트, 자체 디지털 금융 플랫폼 글로벌 상용화 성공"
+label = "positive"
+
+[[sample]]
+no = 176
+ticker = "030210"
+name = "다올투자증권"
+title = "다올투자증권 “AI 신약개발, 승부처는 데이터…국내 제약사 협업 기회..."
+label = "neutral"
+
+[[sample]]
+no = 177
+ticker = "487400"
+name = "케이앤에스아이앤씨"
+title = "케이앤에스아이앤씨, '저궤도 잠수함 위성통신체계 개발' 국책과제 수행"
+label = "positive"
+
+[[sample]]
+no = 178
+ticker = "137310"
+name = "에스디바이오센서"
+title = "[제약 레이더] SK바이오팜·에스디바이오센서·대웅제약, 파이프라인 확..."
+label = "neutral"
+
+[[sample]]
+no = 179
+ticker = "062040"
+name = "산일전기"
+title = "산일전기 주가, 9월 21일 205,000원 3.07% 하락"
+label = "neutral"
+
+[[sample]]
+no = 180
+ticker = "365270"
+name = "큐라클"
+title = "맵틱스·큐라클, 혈관염 이중항체 MT-501 국가과제 선정"
+label = "positive"
+
+[[sample]]
+no = 181
+ticker = "327260"
+name = "RF머트리얼즈"
+title = "RF머트리얼즈 주가, 9월 18일 장중 49,050원 8.16% 상승"
+label = "neutral"
+
+[[sample]]
+no = 182
+ticker = "095340"
+name = "ISC"
+title = "중부지방국세청, 세무조사로 ISC 7.9억·ITMTC 1.3억 추징"
+label = "negative"
+
+[[sample]]
+no = 183
+ticker = "331520"
+name = "밸로프"
+title = "밸로프, 독자 개발 스핀오프작 '아바 리:버스(AVA RE:BIRTH)' CBT 참가자 ..."
+label = "neutral"
+
+[[sample]]
+no = 184
+ticker = "008770"
+name = "호텔신라"
+title = "호텔신라, 추석 맞아 따뜻한 나눔의 손길… 식당주와 취약계층에 물품 ..."
+label = "neutral"
+
+[[sample]]
+no = 185
+ticker = "465480"
+name = "인스피언"
+title = "인스피언, 상반기 EDI 매출 22억 전년 74% 달성"
+label = "positive"
+
+[[sample]]
+no = 186
+ticker = "093520"
+name = "매커스"
+title = "매커스 주가, 9월 22일 장중 28,950원 4.89% 상승"
+label = "neutral"
+
+[[sample]]
+no = 187
+ticker = "210120"
+name = "캔버스엔"
+title = "[EBN 데이터센터] 네오사피엔스 243% 급등, 캔버스엔 등 상한가"
+label = "neutral"
+
+[[sample]]
+no = 188
+ticker = "029460"
+name = "케이씨"
+title = "케이씨 주가, 9월 21일 애프터마켓 44,400원 7.51% 상승"
+label = "neutral"
+
+[[sample]]
+no = 189
+ticker = "035510"
+name = "신세계 I&C"
+title = "신세계I&C, 2년간 자사주 약 84만주 소각...최저 배당금 400원으로 상향"
+label = "positive"
+
+[[sample]]
+no = 190
+ticker = "101490"
+name = "에스앤에스텍"
+title = "에스앤에스텍 주가, 9월 22일 장중 43,100원 1.26% 하락"
+label = "neutral"
+
+[[sample]]
+no = 191
+ticker = "227950"
+name = "엔투텍"
+title = "[공시]엔투텍, 100억원 규모 사모 전환사채 발행"
+label = "negative"
+
+[[sample]]
+no = 192
+ticker = "439580"
+name = "블루엠텍"
+title = "블루엠텍 주가, 9월 22일 3,120원 13.87% 상승"
+label = "neutral"
+
+[[sample]]
+no = 193
+ticker = "100590"
+name = "머큐리"
+title = "머큐리 주가, 9월 23일 장중 5,200원 6.34% 상승"
+label = "neutral"
+
+[[sample]]
+no = 194
+ticker = "002420"
+name = "우양피앤엘"
+title = "70억 법인이 1400억 경동오토필드 품었다…우양피앤엘 자금조달 '물음표..."
+label = "negative"
+
+[[sample]]
+no = 195
+ticker = "150900"
+name = "파수AI"
+title = "파수AI, 'CSK 2026'서 AI 데이터 유출 방지 위한 보안 전략 제시"
+label = "neutral"
+
+[[sample]]
+no = 196
+ticker = "005710"
+name = "대원산업"
+title = "[필리핀서 온 유족 오열] 고용은 대원유지에, 일은 대원산업서 했다"
+label = "negative"
+
+[[sample]]
+no = 197
+ticker = "006120"
+name = "SK디스커버리"
+title = "최창원, SK디스커버리 성과급 2배 늘었지만…올해는 가스 사업 부진 [가..."
+label = "negative"
+
+[[sample]]
+no = 198
+ticker = "007530"
+name = "와이엠"
+title = "와이엠텍, 반도체 식각 파츠 밀려드는 주문에 생산시설 증설"
+label = "positive"
+
+[[sample]]
+no = 199
+ticker = "261200"
+name = "덴티스"
+title = "덴티스, 포터블 골내마취기 'DENOPS-i' 치과 대상 특별 프로모션 진행"
+label = "neutral"
+
+[[sample]]
+no = 200
+ticker = "205500"
+name = "넥써쓰"
+title = "[ICT 종합] 넥써쓰 및 SOOP 소식 외"
+label = "neutral"
+
+[[sample]]
+no = 201
+ticker = "083790"
+name = "CG인바이츠"
+title = "[더벨]CG인바이츠, 中 JV 인바이츠루프 독점권 '라이선스 수익화'"
+label = "positive"
+
+[[sample]]
+no = 202
+ticker = "298050"
+name = "HS효성첨단소재"
+title = "HS효성첨단소재, 북미 최대 복합재료 전시회에서 최신 기술 소개"
+label = "neutral"
+
+[[sample]]
+no = 203
+ticker = "001390"
+name = "KG케미칼"
+title = "KG케미칼, 울산공장 내 유휴부지 활용 탱크터미널 첫 삽"
+label = "positive"
+
+[[sample]]
+no = 204
+ticker = "086900"
+name = "메디톡스"
+title = "[단독] 메디톡스, 일본사업전략팀 신설…정식허가 전 김민주 상업화 총..."
+label = "positive"
+
+[[sample]]
+no = 205
+ticker = "208640"
+name = "썸에이지"
+title = "[업앤다운]게임주 상승…엔씨↑·썸에이지↓"
+label = "neutral"
+
+[[sample]]
+no = 206
+ticker = "119850"
+name = "지엔씨에너지"
+title = "지엔씨에너지 주가, 9월 22일 장중 57,000원 8.99% 상승"
+label = "neutral"
+
+[[sample]]
+no = 207
+ticker = "083650"
+name = "비에이치아이"
+title = "실적 고공행진에도 비에이치아이 7%대 급락…6만원선 이탈"
+label = "neutral"
+
+[[sample]]
+no = 208
+ticker = "054050"
+name = "NH농우바이오"
+title = "NH농우바이오, 10월 추천품종"
+label = "neutral"
+
+[[sample]]
+no = 209
+ticker = "042520"
+name = "한스바이오메드"
+title = "한스바이오메드, 인체조직 ECM 산업 협력체계 구축 동참"
+label = "neutral"
+
+[[sample]]
+no = 210
+ticker = "290650"
+name = "엘앤씨바이오"
+title = "엘앤씨바이오 '메가카티', 4년 장기 임상 확보…아시아 시장 공략"
+label = "positive"
+
+[[sample]]
+no = 211
+ticker = "196170"
+name = "알테오젠"
+title = "알테오젠, 키트루다 SC 조성물 특허 '유럽 등록'"
+label = "positive"
+
+[[sample]]
+no = 212
+ticker = "038500"
+name = "삼표시멘트"
+title = "삼표시멘트, 삼척 중앙시장서 추석 명절 맞이 장보기 행사 진행"
+label = "neutral"
+
+[[sample]]
+no = 213
+ticker = "032540"
+name = "TJ미디어"
+title = "TJ미디어, ‘방대방 노래대결’ 갖춘 A3·P3 렌탈 행사 진행"
+label = "neutral"
+
+[[sample]]
+no = 214
+ticker = "059090"
+name = "미코"
+title = "미코 주가, 9월 22일 22,600원 13.11% 상승"
+label = "neutral"
+
+[[sample]]
+no = 215
+ticker = "307280"
+name = "원바이오젠"
+title = "원바이오젠, 한국생체재료학회서 ‘메디솝’ 상처·피부 케어 제품 소개"
+label = "neutral"
+
+[[sample]]
+no = 216
+ticker = "234300"
+name = "에스트래픽"
+title = "에스트래픽, 美 LA메트로와 100억원 규모 AFC 유지보수 계약"
+label = "positive"
+
+[[sample]]
+no = 217
+ticker = "009150"
+name = "삼성전기"
+title = "[초점] 삼성전기 150만원인데 목표가는 300만원…증권사들의 낙관론, 근..."
+label = "positive"
+
+[[sample]]
+no = 218
+ticker = "210980"
+name = "SK디앤디"
+title = "한앤코의 SK디앤디, 대규모 유증 추진… 필요성 두고 주주와 온도차"
+label = "negative"
+
+[[sample]]
+no = 219
+ticker = "042700"
+name = "한미반도체"
+title = "한미반도체 주가, 9월 23일 장중 238,500원 0.62% 하락"
+label = "neutral"
+
+[[sample]]
+no = 220
+ticker = "003670"
+name = "포스코퓨처엠"
+title = "SK온, 포스코퓨처엠과 손잡고 LFP 양극재 확보…美 시장 정조준"
+label = "positive"
+
+[[sample]]
+no = 221
+ticker = "067160"
+name = "SOOP"
+title = "SOOP, 추석 볼거리 채운다…버추얼 대전부터 e스포츠까지"
+label = "neutral"
+
+[[sample]]
+no = 222
+ticker = "068240"
+name = "다원시스"
+title = "[데스크시각] 다원시스의 씁쓸한 몰락, 생태계 덮친 후폭풍"
+label = "negative"
+
+[[sample]]
+no = 223
+ticker = "064400"
+name = "LG씨엔에스"
+title = "[전일 주요공시] 포스코퓨처엠ㆍLG씨엔에스ㆍHJ중공업 등"
+label = "neutral"
+
+[[sample]]
+no = 224
+ticker = "084180"
+name = "수성웹툰"
+title = "상폐 앞둔 수성웹툰 37% 급등…정리매매 '과열 주의' [핫종목]"
+label = "negative"
+
+[[sample]]
+no = 225
+ticker = "004690"
+name = "삼천리"
+title = "삼천리, 외식사업 확장…SL&C '어온가'로 한식 브랜드 강화"
+label = "positive"
+
+[[sample]]
+no = 226
+ticker = "011330"
+name = "유니켐"
+title = "[더벨][i-point] '로봇 전환' 유니켐, 미국 스탠퍼드·MIT 석학 영입"
+label = "positive"
+
+[[sample]]
+no = 227
+ticker = "344820"
+name = "KCC글라스"
+title = "치솟는 공사비에 리폼 수요↑...KCC글라스 '비센티' 라인업 확대"
+label = "positive"
+
+[[sample]]
+no = 228
+ticker = "002900"
+name = "TYM"
+title = "TYM, 유럽 최대 정원산업 박람회 갈라바우2026 단독 참가"
+label = "neutral"
+
+[[sample]]
+no = 229
+ticker = "050960"
+name = "수산아이앤티"
+title = "수산아이앤티, '이프리즘 SSL VA' 국정원 보안기능확인서 획득"
+label = "positive"
+
+[[sample]]
+no = 230
+ticker = "030520"
+name = "한컴"
+title = "한컴위드, AI 문서 자동 분류 기술 확보…N2SF 공공시장 공략"
+label = "positive"
+
+[[sample]]
+no = 231
+ticker = "067630"
+name = "HLB생명과학"
+title = "HLB생명과학 주가, 9월 21일 애프터마켓 2,675원 11.23% 상승"
+label = "neutral"
+
+[[sample]]
+no = 232
+ticker = "462350"
+name = "이노스페이스"
+title = "이노스페이스, 캐나다 진출 본격화...'한빛 발사체'로 북미 시장 공략"
+label = "positive"
+
+[[sample]]
+no = 233
+ticker = "051910"
+name = "LG화학"
+title = "LG화학, 中 정제기술과 결합...반도체용 HP-IPA 공급망 추진"
+label = "positive"
+
+[[sample]]
+no = 234
+ticker = "099320"
+name = "쎄트렉아이"
+title = "한화 '우주 감시망' 실체 드러났다…쎄트렉아이와 'SAR+10cm급 광학위성..."
+label = "positive"
+
+[[sample]]
+no = 235
+ticker = "154030"
+name = "아시아종묘"
+title = "아시아종묘, 조생·고품질 양배추 신품종 2종 품종보호출원"
+label = "positive"
+
+[[sample]]
+no = 236
+ticker = "005290"
+name = "동진쎄미켐"
+title = "장중 고가가 현재가…동진쎄미켐 9.43% 뛰어 4만7000원"
+label = "neutral"
+
+[[sample]]
+no = 237
+ticker = "060540"
+name = "에스에이티"
+title = "“AI를 위한 데이터 관리 지원” 데이터스트림즈-에스에이티 정보 전략..."
+label = "neutral"
+
+[[sample]]
+no = 238
+ticker = "187660"
+name = "페니트리움바이오"
+title = "페니트리움바이오 주가, 9월 22일 애프터마켓 6,630원 3.59% 상승 기록"
+label = "neutral"
+
+[[sample]]
+no = 239
+ticker = "417010"
+name = "나노팀"
+title = "나노팀 주가, 9월 17일 장중 6,640원 7.97% 상승"
+label = "neutral"
+
+[[sample]]
+no = 240
+ticker = "372910"
+name = "한컴라이프케어"
+title = "한컴라이프케어·케이피엠테크 주가 꿈틀…마스크주에 무슨 호재 있나"
+label = "neutral"
+
+[[sample]]
+no = 241
+ticker = "411080"
+name = "샌즈랩"
+title = "샌즈랩, 제1금융권에 AI 기반 NDR 솔루션 'MNX' 공급"
+label = "positive"
+
+[[sample]]
+no = 242
+ticker = "007570"
+name = "일양약품"
+title = "[일양약품 재도약] ②中 법인 본격 가동…175억 투자 '승부'"
+label = "positive"
+
+[[sample]]
+no = 243
+ticker = "069620"
+name = "대웅제약"
+title = "대웅제약 위식도역류질환 치료제, ‘2.8억 인구’ 인도네시아 진출"
+label = "positive"
+
+[[sample]]
+no = 244
+ticker = "456040"
+name = "OCI"
+title = "태양광 수요 늘어난다는데…한화솔루션·OCI홀딩스 등 대표珠 역주행"
+label = "neutral"
+
+[[sample]]
+no = 245
+ticker = "083660"
+name = "CSA 코스믹"
+title = "CSA코스믹 원더바스, 진천선수촌 찾아 아시안게임 국가대표 선수단 응원"
+label = "neutral"
+
+[[sample]]
+no = 246
+ticker = "089980"
+name = "상아프론테크"
+title = "상아프론테크 주가, 9월 18일 애프터마켓 16,800원 11.85% 상승"
+label = "neutral"
+
+[[sample]]
+no = 247
+ticker = "006040"
+name = "동원산업"
+title = "동원산업·대형선망수협·부산시, K-수산물 소비 확대 나서..."
+label = "neutral"
+
+[[sample]]
+no = 248
+ticker = "377300"
+name = "카카오페이"
+title = "카카오페이증권, 멜론과 오는 10월 23일까지 이벤트 전개"
+label = "neutral"
+
+[[sample]]
+no = 249
+ticker = "286940"
+name = "롯데이노베이트"
+title = "IBK투자증권 '롯데이노베이트, DBO로 2028년 매출 30% 예상'"
+label = "positive"
+
+[[sample]]
+no = 250
+ticker = "330590"
+name = "롯데리츠"
+title = "SK리츠, 롯데리츠 제쳤다…9월 리츠 브랜드평판 1위"
+label = "neutral"
+
+[[sample]]
+no = 251
+ticker = "394420"
+name = "리센스메디컬"
+title = "'집에서 만나는 정밀냉각 뷰티' 리센스메디컬, 일본 독점 계약으로 글로..."
+label = "positive"
+
+[[sample]]
+no = 252
+ticker = "018680"
+name = "서울제약"
+title = "서울제약, 구강붕해필름 OEM·ODM 사업 확대"
+label = "positive"
+
+[[sample]]
+no = 253
+ticker = "109670"
+name = "씨싸이트"
+title = "씨싸이트, 구미현 외 5인과 최대주주 변경 주식양수도 계약"
+label = "negative"
+
+[[sample]]
+no = 254
+ticker = "036810"
+name = "에프에스티"
+title = "[더벨][소부장 2세 시대 개막] 장경빈 에프에스티 대표 '동생도 등기이..."
+label = "neutral"
+
+[[sample]]
+no = 255
+ticker = "112040"
+name = "위메이드"
+title = "위메이드맥스, '로스트 소드'에 신규 캐릭터 '크라사' 추가"
+label = "neutral"
+
+[[sample]]
+no = 256
+ticker = "0155E0"
+name = "해치텍"
+title = "코스닥 상장 해치텍, 충북TP와 성장 동행"
+label = "neutral"
+
+[[sample]]
+no = 257
+ticker = "234300"
+name = "에스트래픽"
+title = "에스트래픽 美 법인, LA 메트로와 100억 규모 계약"
+label = "positive"
+
+[[sample]]
+no = 258
+ticker = "388790"
+name = "라이콤"
+title = "라이콤 주가, 9월 21일 장중 5,340원 5.33% 상승"
+label = "neutral"
+
+[[sample]]
+no = 259
+ticker = "058630"
+name = "엠게임"
+title = "'열혈강호 온라인' 등 엠게임 인기 게임 6종 추석 이벤트 진행"
+label = "neutral"
+
+[[sample]]
+no = 260
+ticker = "271560"
+name = "오리온"
+title = "판 커진 중앙일보 인수전…'오리온·다우기술'까지 6파전 [fn마켓워치]"
+label = "neutral"
+
+[[sample]]
+no = 261
+ticker = "009190"
+name = "대양금속"
+title = "[핫타임] 대양금속, 파산신청 기각 소식 여파…16%대 급락"
+label = "negative"
+
+[[sample]]
+no = 262
+ticker = "464080"
+name = "에스오에스랩"
+title = "[오토노머스 크로니클] 에스오에스랩① : 라이다 혹한기를 건너 엔비디..."
+label = "neutral"
+
+[[sample]]
+no = 263
+ticker = "226590"
+name = "엠디바이스"
+title = "엠디바이스, GPUㆍ메모리 고속 연결 CXL 2.0 개발…차세대 3.0도 착수"
+label = "positive"
+
+[[sample]]
+no = 264
+ticker = "001440"
+name = "대한전선"
+title = "대한전선 주가, 9월 23일 장중 30,850원 2.37% 하락"
+label = "neutral"
+
+[[sample]]
+no = 265
+ticker = "058860"
+name = "KTis"
+title = "KTis, 자사주 9.76% 소각…3년간 순익 40% 주주환원"
+label = "positive"
+
+[[sample]]
+no = 266
+ticker = "063080"
+name = "컴투스홀딩스"
+title = "컴투스홀딩스 '소울 스트라이크', 추석 맞아 '달빛 송편 공방' 연다"
+label = "neutral"
+
+[[sample]]
+no = 267
+ticker = "053950"
+name = "경남제약"
+title = "경남제약, ‘나이칸정’ 출시…비타민 B6 보급·구내염 완화"
+label = "positive"
+
+[[sample]]
+no = 268
+ticker = "092600"
+name = "앤씨앤"
+title = "영상보안부터 차량용 칩까지... 앤씨앤, 초저전력 AI 알고리즘 탑재 기..."
+label = "neutral"
+
+[[sample]]
+no = 269
+ticker = "377030"
+name = "비트맥스"
+title = "비트맥스 주가, 9월 22일 장중 2,020원 1.71% 상승"
+label = "neutral"
+
+[[sample]]
+no = 270
+ticker = "092780"
+name = "DYP"
+title = "[상한가 종목] 동양-선도전기 이어 앤씨앤-DYP 등 마감"
+label = "neutral"
+
+[[sample]]
+no = 271
+ticker = "023960"
+name = "에쓰씨엔지니어링"
+title = "에쓰씨엔지니어링, 반도그룹과 함께 지역사회 ESG 활동 더 강화"
+label = "neutral"
+
+[[sample]]
+no = 272
+ticker = "014950"
+name = "삼익제약"
+title = "삼익제약 주가, 9월 17일 애프터마켓 10,450원 2.05% 상승"
+label = "neutral"
+
+[[sample]]
+no = 273
+ticker = "052690"
+name = "한전기술"
+title = "한전기술 5.94% 급락…12만9900원으로 13만원선 이탈"
+label = "neutral"
+
+[[sample]]
+no = 274
+ticker = "338220"
+name = "뷰노"
+title = "뷰노 이예하 대표, 신주인수권증서 90만1356주 매도 계획…거래금액 44억..."
+label = "negative"
+
+[[sample]]
+no = 275
+ticker = "461300"
+name = "아이스크림미디어"
+title = "아이스크림미디어, 싱가포르 유아교육 관계자에 에듀테크 소개"
+label = "neutral"
+
+[[sample]]
+no = 276
+ticker = "051370"
+name = "인터플렉스"
+title = "인터플렉스 주가, 9월 22일 장중 6,950원 11.02% 상승"
+label = "neutral"
+
+[[sample]]
+no = 277
+ticker = "092220"
+name = "KEC"
+title = "KEC 주가, 9월 21일 장중 3,045원 6.65% 상승"
+label = "neutral"
+
+[[sample]]
+no = 278
+ticker = "011070"
+name = "LG이노텍"
+title = "삼성전기 날아오를 때…LG이노텍, 환율에 비상"
+label = "negative"
+
+[[sample]]
+no = 279
+ticker = "144510"
+name = "지씨셀"
+title = "임기 6개월 남은 김재왕 지씨셀 대표 … 영업적자는 줄었지만 매출 반등..."
+label = "neutral"
+
+[[sample]]
+no = 280
+ticker = "011300"
+name = "우성머티리얼스"
+title = "패션-인디에프·한섬, 섬유-우성머티리얼스 강세, 뷰티-약세"
+label = "neutral"
+
+[[sample]]
+no = 281
+ticker = "092870"
+name = "엑시콘"
+title = "AI 서버 커지자 CXL株 들썩…엑시콘 14%·파두 10% 급등"
+label = "neutral"
+
+[[sample]]
+no = 282
+ticker = "242040"
+name = "나무AX"
+title = "GPU 배분부터 AI 모델 운영까지…나무AX, ‘NAAX’ 공개"
+label = "neutral"
+
+[[sample]]
+no = 283
+ticker = "005180"
+name = "빙그레"
+title = "K-푸드·뷰티, ‘중남미 관문’ 멕시코로…빙그레·농심·아모레 'k-엑스..."
+label = "neutral"
+
+[[sample]]
+no = 284
+ticker = "256840"
+name = "한국비엔씨"
+title = "한국비엔씨 쥬브겔, 의료진 70명 참여 'DUAL ACADEMY' 성료"
+label = "neutral"
+
+[[sample]]
+no = 285
+ticker = "066570"
+name = "LG전자"
+title = "LG전자 걸그룹 '에이아이돌', 제대로 돌리는 매력?... AI워시콤보 특징 ..."
+label = "neutral"
+
+[[sample]]
+no = 286
+ticker = "284740"
+name = "쿠쿠홈시스"
+title = "쿠쿠홈시스, 해외 매출 뒷걸음…미국·인도 적자 확대"
+label = "negative"
+
+[[sample]]
+no = 287
+ticker = "050890"
+name = "쏠리드"
+title = "'지금이 매수 기회'…쏠리드, 1년간 주가 크게 뛸까"
+label = "neutral"
+
+[[sample]]
+no = 288
+ticker = "121440"
+name = "골프존홀딩스"
+title = "[포토] 신상훈, 김영찬 골프존홀딩스 회장으로부터 우승 트로피"
+label = "neutral"
+
+[[sample]]
+no = 289
+ticker = "005880"
+name = "대한해운"
+title = "대한해운, 국립목포해양대에 발전기금 기탁"
+label = "neutral"
+
+[[sample]]
+no = 290
+ticker = "100220"
+name = "비상교육"
+title = "[똑똑한교육] 비상교육, 대교CNS, 아이스크림미디어, 위버스브레인 맥스..."
+label = "neutral"
+
+[[sample]]
+no = 291
+ticker = "071840"
+name = "롯데하이마트"
+title = "볼트테크코리아·롯데하이마트, 아이폰 18 프로 맞춤형 케어 서비스 선..."
+label = "neutral"
+
+[[sample]]
+no = 292
+ticker = "448730"
+name = "삼성FN리츠"
+title = "삼성FN리츠, 970억 유증 절차 개시…1차 발행가액 확정"
+label = "negative"
+
+[[sample]]
+no = 293
+ticker = "049800"
+name = "우진플라임"
+title = "파라과이 정부 대표단, 우진플라임 본사 찾아 '제조 공정·인재 양성' 벤..."
+label = "neutral"
+
+[[sample]]
+no = 294
+ticker = "045660"
+name = "에이텍"
+title = "휴림에이텍, 3년 락업 해제⋯추가 유증 앞두고 수급 변수"
+label = "negative"
+
+[[sample]]
+no = 295
+ticker = "007340"
+name = "DN오토모티브"
+title = "DN오토모티브 '납 중독 의혹' 국회로…노동자 혈중 납 수치 논란, 무엇이..."
+label = "negative"
+
+[[sample]]
+no = 296
+ticker = "027410"
+name = "BGF"
+title = "에스원, 물류센터 특화 솔루션 본격 운영... BGF로지스 19개 상온센터 적..."
+label = "neutral"
+
+[[sample]]
+no = 297
+ticker = "310200"
+name = "애니플러스"
+title = "[더벨]애니플러스, 'CSO 신설' 그룹 차원 관리 강화"
+label = "neutral"
+
+[[sample]]
+no = 298
+ticker = "012210"
+name = "삼미금속"
+title = "삼미금속 주가, 9월 23일 장중 12,630원 6.72% 하락"
+label = "neutral"
+
+[[sample]]
+no = 299
+ticker = "475150"
+name = "SK이터닉스"
+title = "SK이터닉스 주가, 9월 22일 장중 50,800원 1.20% 상승"
+label = "neutral"
+
+[[sample]]
+no = 300
+ticker = "494120"
+name = "큐리오시스"
+title = "의료기기 관련주 차별화…큐리오시스 7%대·피앤에스로보틱스 6%대 상승..."
+label = "neutral"

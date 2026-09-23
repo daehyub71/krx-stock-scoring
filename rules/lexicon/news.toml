@@ -1,0 +1,522 @@
+# 뉴스 사전 v1 — 기사 제목을 호재/악재로 가르는 낱말 (SPEC §5.5).
+#
+# **이 파일이 편집 원본이다.** 고치면 다음 실행부터 적용되고, 사전 버전(해시)이 바뀐다.
+# 이미 게시된 점수는 그대로 남는다 — 사전 편집이 과거 점수를 덮지 않는다.
+#
+# 항목
+#   term     사람이 읽는 이름
+#   norm     제목에서 찾을 낱말 (공백을 지우고 비교한다)
+#   polarity positive | negative
+#   priority 작을수록 먼저 본다 — 한 제목에 여럿이 걸리면 이 순서로 정한다
+#   exclude  이 말이 함께 있으면 걸리지 않는다 (해소·부정 표현)
+#   enabled  false면 내려 둔다 (지우지 않는다)
+#
+# D7 사전 검증 전까지 experimental이다 — 제목 300건 라벨링으로 정밀도를 재고 사용 여부를 정한다.
+
+[[term]]
+term = "흑자전환"
+norm = "흑자전환"
+polarity = "positive"
+priority = 10
+
+[[term]]
+term = "최대실적"
+norm = "최대실적"
+polarity = "positive"
+priority = 10
+
+[[term]]
+term = "어닝서프라이즈"
+norm = "어닝서프라이즈"
+polarity = "positive"
+priority = 10
+
+[[term]]
+term = "수주"
+norm = "수주"
+polarity = "positive"
+priority = 20
+exclude = ["취소", "해지", "무산"]
+
+[[term]]
+term = "공급계약"
+norm = "공급계약"
+polarity = "positive"
+priority = 20
+exclude = ["해지", "해제"]
+
+[[term]]
+term = "신고가"
+norm = "신고가"
+polarity = "positive"
+priority = 20
+
+[[term]]
+term = "자사주 매입"
+norm = "자사주매입"
+polarity = "positive"
+priority = 20
+exclude = ["처분"]
+
+[[term]]
+term = "자사주 소각"
+norm = "자사주소각"
+polarity = "positive"
+priority = 20
+
+[[term]]
+term = "무상증자"
+norm = "무상증자"
+polarity = "positive"
+priority = 20
+exclude = ["유무상"]
+
+[[term]]
+term = "배당 확대"
+norm = "배당확대"
+polarity = "positive"
+priority = 20
+
+[[term]]
+term = "목표가 상향"
+norm = "목표가상향"
+polarity = "positive"
+priority = 20
+
+[[term]]
+term = "실적 개선"
+norm = "실적개선"
+polarity = "positive"
+priority = 30
+
+[[term]]
+term = "영업이익 증가"
+norm = "영업이익증가"
+polarity = "positive"
+priority = 30
+
+[[term]]
+term = "식약처 허가"
+norm = "품목허가"
+polarity = "positive"
+priority = 30
+
+[[term]]
+term = "기술이전"
+norm = "기술이전"
+polarity = "positive"
+priority = 30
+
+[[term]]
+term = "상장폐지"
+norm = "상장폐지"
+polarity = "negative"
+priority = 10
+exclude = ["면했", "해소"]
+
+[[term]]
+term = "횡령"
+norm = "횡령"
+polarity = "negative"
+priority = 10
+
+[[term]]
+term = "배임"
+norm = "배임"
+polarity = "negative"
+priority = 10
+
+[[term]]
+term = "압수수색"
+norm = "압수수색"
+polarity = "negative"
+priority = 10
+
+[[term]]
+term = "회생절차"
+norm = "회생절차"
+polarity = "negative"
+priority = 10
+exclude = ["종결"]
+
+[[term]]
+term = "거래정지"
+norm = "거래정지"
+polarity = "negative"
+priority = 10
+exclude = ["해제", "해소", "재개"]
+note = "D7: 「해소 첫 관문」·나열 공시 기사에서 오탐. 나열 기사는 관련성 필터 몫이다"
+
+[[term]]
+term = "불성실공시"
+norm = "불성실공시"
+polarity = "negative"
+priority = 10
+
+[[term]]
+term = "적자전환"
+norm = "적자전환"
+polarity = "negative"
+priority = 10
+
+[[term]]
+term = "어닝쇼크"
+norm = "어닝쇼크"
+polarity = "negative"
+priority = 10
+
+[[term]]
+term = "유상증자"
+norm = "유상증자"
+polarity = "negative"
+priority = 20
+exclude = ["철회"]
+
+[[term]]
+term = "감자"
+norm = "감자결정"
+polarity = "negative"
+priority = 20
+
+[[term]]
+term = "소송"
+norm = "소송"
+polarity = "negative"
+priority = 20
+exclude = ["승소", "취하", "봉합", "종결"]
+
+[[term]]
+term = "리콜"
+norm = "리콜"
+polarity = "negative"
+priority = 20
+
+[[term]]
+term = "목표가 하향"
+norm = "목표가하향"
+polarity = "negative"
+priority = 20
+
+[[term]]
+term = "영업이익 감소"
+norm = "영업이익감소"
+polarity = "negative"
+priority = 30
+
+[[term]]
+term = "실적 부진"
+norm = "실적부진"
+polarity = "negative"
+priority = 30
+
+[[term]]
+term = "공장 화재"
+norm = "화재"
+polarity = "negative"
+priority = 30
+exclude = ["보험금"]
+enabled = false
+note = "D7 라벨링에서 정밀도 6.7%(15건 중 14건 오분류) — 삼성화재·흥국화재는 회사명이고 '문화재단'에도 들어간다. 낱말 하나로는 못 가른다"
+
+[[term]]
+term = "주가조작"
+norm = "주가조작"
+polarity = "negative"
+priority = 10
+
+[[term]]
+term = "시세조종"
+norm = "시세조종"
+polarity = "negative"
+priority = 10
+
+[[term]]
+term = "불공정거래"
+norm = "불공정거래"
+polarity = "negative"
+priority = 10
+
+[[term]]
+term = "분식회계"
+norm = "분식회계"
+polarity = "negative"
+priority = 10
+
+[[term]]
+term = "구속"
+norm = "구속"
+polarity = "negative"
+priority = 10
+exclude = ["영장기각", "석방"]
+
+[[term]]
+term = "기소"
+norm = "기소"
+polarity = "negative"
+priority = 10
+exclude = ["불기소"]
+
+[[term]]
+term = "실형"
+norm = "실형"
+polarity = "negative"
+priority = 10
+exclude = ["무죄"]
+
+[[term]]
+term = "징역"
+norm = "징역"
+polarity = "negative"
+priority = 15
+exclude = ["무죄", "무혐의"]
+
+[[term]]
+term = "구형"
+norm = "구형"
+polarity = "negative"
+priority = 15
+exclude = ["무죄", "무혐의"]
+
+[[term]]
+term = "유죄"
+norm = "유죄"
+polarity = "negative"
+priority = 15
+exclude = ["무죄"]
+
+[[term]]
+term = "검찰 수사"
+norm = "검찰수사"
+polarity = "negative"
+priority = 15
+exclude = ["무혐의"]
+
+[[term]]
+term = "과징금"
+norm = "과징금"
+polarity = "negative"
+priority = 20
+exclude = ["취소", "감면"]
+
+[[term]]
+term = "담합"
+norm = "담합"
+polarity = "negative"
+priority = 20
+exclude = ["취소", "무혐의"]
+
+[[term]]
+term = "상장적격성 실질심사"
+norm = "실질심사"
+polarity = "negative"
+priority = 10
+
+[[term]]
+term = "배임 혐의"
+norm = "배임혐의"
+polarity = "negative"
+priority = 10
+
+# ── D7 라벨링(2026-09-23, 표본 300건)에서 채택한 낱말 ──
+# 표본에서 오탐 0 · 놓친 사건의 35%를 회수한다. 사람이 단 라벨은 docs/m3/news_labels_2026-09-22.toml.
+
+[[term]]
+term = "특허"
+norm = "특허"
+polarity = "positive"
+priority = 25
+exclude = ["소송", "분쟁", "침해"]
+note = "D7 채택 (2026-09-23)"
+
+[[term]]
+term = "자사주 소각"
+norm = "소각"
+polarity = "positive"
+priority = 25
+note = "D7 채택 (2026-09-23)"
+
+[[term]]
+term = "사업 확대"
+norm = "사업확대"
+polarity = "positive"
+priority = 25
+note = "D7 채택 (2026-09-23)"
+
+[[term]]
+term = "공급"
+norm = "공급"
+polarity = "positive"
+priority = 25
+exclude = ["중단", "차질", "망"]
+note = "D7 채택 (2026-09-23)"
+
+[[term]]
+term = "임상 3상"
+norm = "3상"
+polarity = "positive"
+priority = 25
+exclude = ["실패", "중단"]
+note = "D7 채택 (2026-09-23)"
+
+[[term]]
+term = "국가과제 선정"
+norm = "과제선정"
+polarity = "positive"
+priority = 25
+note = "D7 채택 (2026-09-23)"
+
+[[term]]
+term = "국가과제"
+norm = "국가과제"
+polarity = "positive"
+priority = 25
+note = "D7 채택 (2026-09-23)"
+
+[[term]]
+term = "증설"
+norm = "증설"
+polarity = "positive"
+priority = 25
+note = "D7 채택 (2026-09-23)"
+
+[[term]]
+term = "턴어라운드"
+norm = "턴어라운드"
+polarity = "positive"
+priority = 25
+note = "D7 채택 (2026-09-23)"
+
+[[term]]
+term = "목표주가"
+norm = "목표주가"
+polarity = "positive"
+priority = 25
+exclude = ["하향", "하락"]
+note = "D7 채택 (2026-09-23)"
+
+[[term]]
+term = "MOU 체결"
+norm = "mou"
+polarity = "positive"
+priority = 25
+exclude = ["해지"]
+note = "D7 채택 (2026-09-23)"
+
+[[term]]
+term = "독점 계약"
+norm = "독점계약"
+polarity = "positive"
+priority = 25
+note = "D7 채택 (2026-09-23)"
+
+[[term]]
+term = "전환사채"
+norm = "전환사채"
+polarity = "negative"
+priority = 15
+exclude = ["상환", "취득"]
+note = "D7 채택 (2026-09-23)"
+
+[[term]]
+term = "유증"
+norm = "유증"
+polarity = "negative"
+priority = 15
+exclude = ["철회"]
+note = "D7 채택 (2026-09-23)"
+
+[[term]]
+term = "관리종목"
+norm = "관리종목"
+polarity = "negative"
+priority = 15
+exclude = ["해제"]
+note = "D7 채택 (2026-09-23)"
+
+[[term]]
+term = "감사의견 거절"
+norm = "의견거절"
+polarity = "negative"
+priority = 15
+note = "D7 채택 (2026-09-23)"
+
+[[term]]
+term = "상폐"
+norm = "상폐"
+polarity = "negative"
+priority = 15
+exclude = ["해소", "면했"]
+note = "D7 채택 (2026-09-23)"
+
+[[term]]
+term = "정리매매"
+norm = "정리매매"
+polarity = "negative"
+priority = 15
+note = "D7 채택 (2026-09-23)"
+
+[[term]]
+term = "추징"
+norm = "추징"
+polarity = "negative"
+priority = 15
+note = "D7 채택 (2026-09-23)"
+
+[[term]]
+term = "세무조사"
+norm = "세무조사"
+polarity = "negative"
+priority = 15
+note = "D7 채택 (2026-09-23)"
+
+[[term]]
+term = "파산"
+norm = "파산"
+polarity = "negative"
+priority = 15
+exclude = ["기각"]
+note = "D7 채택 (2026-09-23)"
+
+[[term]]
+term = "최대주주 변경"
+norm = "최대주주변경"
+polarity = "negative"
+priority = 15
+note = "D7 채택 (2026-09-23)"
+
+[[term]]
+term = "적자 확대"
+norm = "적자확대"
+polarity = "negative"
+priority = 15
+note = "D7 채택 (2026-09-23)"
+
+[[term]]
+term = "단기차입"
+norm = "차입"
+polarity = "negative"
+priority = 15
+exclude = ["상환"]
+note = "D7 채택 (2026-09-23)"
+
+[[term]]
+term = "락업 해제"
+norm = "락업해제"
+polarity = "negative"
+priority = 15
+note = "D7 채택 (2026-09-23)"
+
+[[term]]
+term = "감자"
+norm = "감자"
+polarity = "negative"
+priority = 15
+exclude = ["무상증자"]
+note = "D7 채택 (2026-09-23)"
+
+[[term]]
+term = "매도 계획"
+norm = "매도계획"
+polarity = "negative"
+priority = 15
+note = "D7 채택 (2026-09-23)"

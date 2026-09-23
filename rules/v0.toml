@@ -221,6 +221,7 @@ min = -9
 role = "common"
 window_days = 7
 max_articles = 3
+max_lag_days = 3            # T가 이보다 오래되면 소급 실행 — 뉴스를 만들지 않는다
 per_article = 3             # 호재 +3 · 악재 −3 · 중립 0
 tiers = [[0, 9]]            # 도달 가능 만점 표기용
 pending = true              # 사전 검증(D7) 전에는 확정 등급을 게시하지 않는다

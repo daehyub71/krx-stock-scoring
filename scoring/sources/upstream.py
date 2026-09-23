@@ -212,3 +212,24 @@ def load_signals(conn: Conn, d: date) -> list[Signal]:
                    created_at=r[5])
             for r in cur.fetchall()
         ]
+
+
+def aux_counts(conn: Conn, t: date) -> dict[str, dict[str, int]]:
+    """보조 갈래(수급·공매도)의 T일 기대·저장 수 (SPEC §6.3).
+
+    기대 수는 그날 유니버스의 종목 수다. 상위가 보조 자료를 **일부 종목만** 담는 날이 있으므로
+    저장 행 수만으로는 정상 여부를 알 수 없다.
+    """
+    with conn.cursor() as cur:
+        cur.execute("select count(*) from ksc_tickers")
+        expected = int((cur.fetchone() or (0,))[0])
+        cur.execute(
+            "select (select count(*) from ksc_investor_flows where d = %s), "
+            "       (select count(*) from ksc_shorting where d = %s)",
+            (t, t),
+        )
+        flows, shorting = cur.fetchone() or (0, 0)
+    return {
+        "flows": {"expected": expected, "stored": int(flows), "valid": int(flows)},
+        "shorting": {"expected": expected, "stored": int(shorting), "valid": int(shorting)},
+    }

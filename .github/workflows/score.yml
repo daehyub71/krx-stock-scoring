@@ -1,0 +1,90 @@
+name: score
+
+# 채점·게시 (SPEC §6.1). 세 갈래로 들어온다.
+#
+#   1. repository_dispatch — 상위 charts 수집이 끝나면 보낸다 (M4에서 연결, D2)
+#   2. schedule 23:37 KST — 이벤트가 없어도 도는 예비 실행
+#   3. schedule 07:17 KST — 전날 미게시분 복구
+#
+# 예약은 지연·누락될 수 있다. 그래서 예비 실행과 복구 잡을 함께 둔다.
+# 이벤트가 왔다는 사실 자체는 품질 통과가 아니다 — 배치가 상위 DB 상태를 다시 검사한다.
+
+on:
+  repository_dispatch:
+    types: [upstream_collected]
+  schedule:
+    - cron: "37 14 * * 1-5" # 월~금 23:37 KST — 당일 채점
+    - cron: "17 22 * * *" # 매일 07:17 KST — 전일 미게시분 복구
+  workflow_dispatch:
+    inputs:
+      profile:
+        description: 채점 프로필
+        type: choice
+        options: [common, partial, technical]
+        default: common
+      date:
+        description: 평가 거래일 T (비우면 마지막 거래일)
+        type: string
+      mode:
+        description: 실행 방식
+        type: choice
+        options: [score, recover]
+        default: score
+
+# 코드를 읽기만 한다 (SPEC N24)
+permissions:
+  contents: read
+
+# 같은 T·프로필을 두 실행이 동시에 건드리지 않는다. **진행 중인 실행을 취소하지 않는다** —
+# 중간에 끊긴 실행은 게시 포인터를 바꾸지 못한 채 좀비로 남는다 (SPEC §6.4).
+concurrency:
+  group: score-${{ github.event.client_payload.data_date || inputs.date || 'latest' }}
+  cancel-in-progress: false
+
+jobs:
+  score:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60 # 30분은 정상 채점의 목표이지 상한이 아니다 (SPEC §6.4)
+    env:
+      UPSTREAM_DATABASE_URL: ${{ secrets.UPSTREAM_DATABASE_URL }}
+      KSS_DATABASE_URL: ${{ secrets.KSS_DATABASE_URL }}
+      KSS_BATCH_PASSWORD: ${{ secrets.KSS_BATCH_PASSWORD }}
+      DART_API_KEY: ${{ secrets.DART_API_KEY }}
+      NAVER_CLIENT_ID: ${{ secrets.NAVER_CLIENT_ID }}
+      NAVER_CLIENT_SECRET: ${{ secrets.NAVER_CLIENT_SECRET }}
+      KRX_ID: ${{ secrets.KRX_ID }}
+      KRX_PW: ${{ secrets.KRX_PW }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1 (node24)
+
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7.0.0 (node24)
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: requirements.txt
+
+      - name: 의존성
+        run: pip install -r requirements.txt
+
+      # 07:17 예약은 복구, 나머지는 채점. 수동 실행은 고른 대로 한다.
+      - name: 실행 방식 결정
+        id: mode
+        run: |
+          if [ "${{ inputs.mode }}" = "recover" ] || [ "${{ github.event.schedule }}" = "17 22 * * *" ]; then
+            echo "mode=recover" >> "$GITHUB_OUTPUT"
+          else
+            echo "mode=score" >> "$GITHUB_OUTPUT"
+          fi
+
+      # 파이썬은 -u로 돌린다 — 버퍼링 때문에 잘린 실행의 로그가 통째로 비는 일을 막는다
+      - name: 채점·게시
+        if: steps.mode.outputs.mode == 'score'
+        run: |
+          python -u -m scoring.run score \
+            --profile "${{ inputs.profile || 'common' }}" \
+            --trigger "${{ github.event_name }}" \
+            ${{ github.event.client_payload.data_date && format('--date {0}', github.event.client_payload.data_date) || (inputs.date && format('--date {0}', inputs.date)) || '' }}
+
+      - name: 미게시분 복구
+        if: steps.mode.outputs.mode == 'recover'
+        run: python -u -m scoring.run recover --profile "${{ inputs.profile || 'common' }}"

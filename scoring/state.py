@@ -14,7 +14,7 @@ from uuid import UUID
 
 import psycopg
 
-from scoring.compute import Fundamentals, TickerResult
+from scoring.compute import Events, Fundamentals, TickerResult
 from scoring.rules import Rules
 from scoring.sources.upstream import CalendarInfo, Snapshot
 
@@ -29,6 +29,7 @@ class RunState(TypedDict, total=False):
     t: str
     run_id: str | None
     gate_ok: bool
+    publish_decision: str
     status: str
     stats: dict[str, Any]
 
@@ -46,6 +47,7 @@ class RunContext:
     snapshot: Snapshot | None = None
     results: list[TickerResult] | None = None
     fundamentals: Fundamentals | None = None
+    events: Events | None = None
     dart_calls: int = 0
     run_id: UUID | None = None
     published_at: datetime | None = None
