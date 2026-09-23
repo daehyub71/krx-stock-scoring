@@ -30,8 +30,19 @@ from scoring.store import writer
 WEEKLY_OR_MONTHLY_STRATEGIES = frozenset({"mtf", "pullback", "squeeze", "turnaround"})
 
 
+def say(message: str) -> None:
+    """진행 상황을 즉시 찍는다.
+
+    끝에서만 결과를 내던 탓에 Actions에서 60분을 돌다 잘린 실행의 로그가 **통째로 비었다**
+    (2026-09-23). 어디서 멈췄는지 모르면 고칠 수도 없다.
+    """
+    print(f"[{time.strftime('%H:%M:%S')}] {message}", flush=True)
+
+
 def _timed(ctx: RunContext, name: str, started: float) -> None:
-    ctx.timings[name] = round(time.monotonic() - started, 2)
+    elapsed = round(time.monotonic() - started, 2)
+    ctx.timings[name] = elapsed
+    say(f"  {name} {elapsed}초")
 
 
 def _kss(ctx: RunContext) -> Any:
@@ -104,6 +115,7 @@ def wait(state: RunState, ctx: RunContext) -> RunState:
 def load(state: RunState, ctx: RunContext) -> RunState:
     """T 기준 창의 일봉·종목·메타 스냅샷."""
     assert ctx.calendar is not None
+    say(f"적재 시작 — T={ctx.calendar.t}")
     started = time.monotonic()
     ctx.snapshot = upstream.load_snapshot(
         ctx.upstream, ctx.calendar, ctx.rules.section("technical")["window_sessions"],
@@ -112,10 +124,12 @@ def load(state: RunState, ctx: RunContext) -> RunState:
     ctx.upstream.rollback()  # 읽기 트랜잭션을 닫는다 (풀러 점유 최소화)
     _timed(ctx, "load", started)
     if state["profile"] != "technical":
+        say("기본 축 입력 (배당·주식 수·보고서)")
         started = time.monotonic()
         ctx.fundamentals = _load_fundamentals(ctx)
         _timed(ctx, "load_fundamentals", started)
     if state["profile"] == "common":
+        say("공시·뉴스 입력")
         started = time.monotonic()
         ctx.events = _load_events(ctx, state)
         _timed(ctx, "load_events", started)
@@ -266,12 +280,17 @@ def _fetch_news(
     assert ctx.snapshot is not None
     articles: dict[str, list[Article]] = {}
     status: dict[str, str] = {}
-    for meta in ctx.snapshot.tickers:
+    total = len(ctx.snapshot.tickers)
+    say(f"  뉴스 조회 {total:,}종목")
+    for i, meta in enumerate(ctx.snapshot.tickers, 1):
         try:
             articles[meta.ticker] = naver.search_news(meta.name, env=env)
             status[meta.ticker] = "observed"
         except naver.NaverError:
             status[meta.ticker] = "source_error"
+        if i % 250 == 0 or i == total:
+            errors = sum(1 for v in status.values() if v == "source_error")
+            say(f"    {i:,}/{total:,} · 실패 {errors}")
         time.sleep(NEWS_DELAY)
     return articles, status
 
@@ -285,7 +304,9 @@ def _load_events(ctx: RunContext, state: RunState) -> compute.Events:
     if not state.get("dry_run") and ctx.kss is not None:
         writer.write_lexicon_version(_kss(ctx), disc_lex.version, "disclosure", disc_lex.entries())
         writer.write_lexicon_version(_kss(ctx), news_lex.version, "news", news_lex.entries())
+        say("  공시 수집 (DART 날짜축)")
         fetched = _sync_disclosures(ctx, t, window_days)
+        say(f"    {fetched:,}건")
         ctx.timings["disclosures_fetched"] = float(fetched)
         disclosures = _read_disclosure_window(ctx, t, window_days)
     else:
@@ -314,6 +335,7 @@ def _load_events(ctx: RunContext, state: RunState) -> compute.Events:
 def compute_scores(state: RunState, ctx: RunContext) -> RunState:
     """전 종목 계산."""
     assert ctx.snapshot is not None
+    say("계산")
     started = time.monotonic()
     ctx.results = compute.compute_scores(ctx.snapshot, ctx.rules, state["profile"],
                                          ctx.fundamentals, ctx.events)
@@ -343,6 +365,7 @@ def persist(state: RunState, ctx: RunContext) -> RunState:
     if state.get("dry_run") or ctx.run_id is None:
         return {}
     assert ctx.snapshot is not None and ctx.results is not None
+    say("저장")
     started = time.monotonic()
     kss = _kss(ctx)
     written = writer.write_results(kss, ctx.run_id, ctx.snapshot.t, state["profile"],

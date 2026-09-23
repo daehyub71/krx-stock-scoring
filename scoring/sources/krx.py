@@ -11,7 +11,9 @@ from __future__ import annotations
 import contextlib
 import io
 import os
+import socket
 import time
+from collections.abc import Iterator
 from dataclasses import dataclass
 from datetime import date
 from typing import Any
@@ -38,11 +40,27 @@ def _quiet() -> contextlib.ExitStack:
     return stack
 
 
+# pykrx는 요청 타임아웃을 받지 않는다. 소켓 기본값으로 막지 않으면 응답 없는 연결에
+# **무한정 매달린다** — Actions에서 60분을 돌다 잘린 실행이 그 모습이었다 (2026-09-23).
+SOCKET_TIMEOUT = 30.0
+
+
+@contextlib.contextmanager
+def _socket_timeout(seconds: float = SOCKET_TIMEOUT) -> Iterator[None]:
+    """이 구간 동안만 소켓 기본 타임아웃을 건다."""
+    previous = socket.getdefaulttimeout()
+    socket.setdefaulttimeout(seconds)
+    try:
+        yield
+    finally:
+        socket.setdefaulttimeout(previous)
+
+
 def _stock(env: dict[str, str]) -> Any:
     for key in ("KRX_ID", "KRX_PW"):
         if env.get(key):
             os.environ[key] = env[key]
-    with _quiet():
+    with _quiet(), _socket_timeout():
         from pykrx import stock
     return stock
 
@@ -55,7 +73,7 @@ def fetch_dividends(t: date, env: dict[str, str], retries: int = 2) -> dict[str,
         df = None
         for attempt in range(retries + 1):
             try:
-                with _quiet():
+                with _quiet(), _socket_timeout():
                     df = stock.get_market_fundamental_by_ticker(t.strftime("%Y%m%d"), market=market)
                 if df is not None and len(df):
                     break
