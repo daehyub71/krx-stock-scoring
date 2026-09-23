@@ -24,8 +24,28 @@ class ConfigError(RuntimeError):
     """필요한 환경변수가 없다."""
 
 
+# 이 배치가 쓰는 환경변수 전부. **CI에는 `.env`가 없으므로 이 목록이 유일한 출처다** —
+# 예전에는 「.env에 이미 있는 키 또는 `_URL`로 끝나는 키」만 환경에서 받아, Actions에서
+# `KSS_BATCH_PASSWORD`가 비어 실행이 죽었다 (2026-09-23 첫 Actions 실행).
+KNOWN_KEYS = (
+    "UPSTREAM_DATABASE_URL",
+    "KSS_DATABASE_URL",
+    "KSS_BATCH_PASSWORD",
+    "KSS_READER_PASSWORD",
+    "DART_API_KEY",
+    "NAVER_CLIENT_ID",
+    "NAVER_CLIENT_SECRET",
+    "KRX_ID",
+    "KRX_PW",
+)
+
+
 def load_env(path: Path | None = None) -> dict[str, str]:
-    """`.env`를 읽고 프로세스 환경변수로 덮어쓴 사전을 돌려준다 (CI는 Secrets가 우선)."""
+    """`.env`를 읽고 프로세스 환경변수로 덮어쓴 사전을 돌려준다 (CI는 Secrets가 우선).
+
+    환경변수는 **`KNOWN_KEYS`에 있거나 `.env`에 이미 있거나 `_URL`로 끝나는** 것을 받는다.
+    `.env`가 없는 러너에서도 Secrets만으로 전부 채워져야 한다.
+    """
     env: dict[str, str] = {}
     target = path or ROOT / ".env"
     if target.exists():
@@ -35,7 +55,10 @@ def load_env(path: Path | None = None) -> dict[str, str]:
                 continue
             key, value = line.split("=", 1)
             env[key.strip()] = value.strip().strip('"').strip("'")
-    env.update({k: v for k, v in os.environ.items() if k in env or k.endswith("_URL")})
+    env.update({
+        k: v for k, v in os.environ.items()
+        if (k in env or k in KNOWN_KEYS or k.endswith("_URL")) and v
+    })
     return env
 
 

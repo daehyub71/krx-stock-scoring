@@ -30,7 +30,7 @@
 | M0 | 의존성 승인 (psycopg·certifi·langgraph, dev: pytest·ruff·mypy) · 규칙 파일 TOML 채택 | ⏳ (langgraph는 2026-09-19 채택) |
 | M0 | 공유 DB 513 MB(한도 초과) — Supabase 대시보드에서 요금제·초과 시 동작 확인 | ⏳ scoring 범위 밖, 보고만 |
 | M2 | KRX 로그인 계정 (charts 값 재사용 여부) | ⏳ |
-| M4 | fine-grained PAT + charts `daily.yml` dispatch 단계 승인 | ⏳ |
+| M4 | **fine-grained PAT**(`daehyub71/krx-stock-scoring` 한정 · Contents 쓰기) → charts Secret `SCORING_DISPATCH_TOKEN` | ⏳ 코드는 준비됨 |
 | M5 | DESIGN 시안 합의 · Vercel 프로젝트 | ⏳ |
 
 ---
@@ -99,7 +99,7 @@
 ## M4 — 운영·게시·복구
 
 - [x] `score.yml` — `repository_dispatch` + 23:37 예비 cron + 07:17 복구, `concurrency`(진행 중 실행을 취소하지 않는다), `python -u`, 타임아웃 60분. 계약 테스트 12개 — 2026-09-23
-- [ ] **charts `daily.yml` dispatch 단계** — 상위 리포 커밋 + fine-grained PAT 필요. **사용자 준비물 대기**
+- [~] **charts `daily.yml` dispatch 단계** — 상위 커밋 완료(charts `b604b35`). 토큰이 없으면 건너뛰도록 만들어 두었다. **남은 것은 `SCORING_DISPATCH_TOKEN` Secret 등록뿐**(사용자 준비물) — 없어도 23:37 예비 cron으로 채점은 돈다
 - [x] 출처별 게이트 → `published_degraded` / `waiting_upstream` — `gate_aux`(수급·공매도 95%)·`publish_decision`. 실측 게이트: bars 0.998/0.995 · flows 0.955 · shorting 0.996 — 2026-09-23
 - [x] 복구 큐(5거래일)·heartbeat — `scoring.run recover`(좀비 실행 정리 + 미게시일 재처리), `sweep_stale_runs` — 2026-09-23
 - [x] 입력 스냅샷·아카이브(`jsonl.gz`)·복원 검증·보존 삭제 — `scoring.run archive [--prune]`. **실측**: 4개 실행 내보내기·검증 통과·점수 11,084행·유니버스 11,084행 삭제, 게시본은 그대로 — 2026-09-23

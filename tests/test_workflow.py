@@ -7,6 +7,7 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import Any
 
 import pytest
 
@@ -58,3 +59,46 @@ def test_no_literal_credentials() -> None:
     """값이 파일에 박히지 않았는지 — 공개 리포다."""
     for marker in ("postgres://", "postgresql://", "eyJ"):
         assert marker not in TEXT
+
+
+# ── 환경변수 적재 (2026-09-23 첫 Actions 실행에서 드러남) ───────
+#
+# `.env`가 없는 러너에서는 Secrets가 유일한 출처다. 예전 규칙(「.env에 이미 있는 키 또는
+# `_URL`로 끝나는 키」)으로는 `KSS_BATCH_PASSWORD`가 비어 실행이 죽었다.
+
+
+def test_workflow_secrets_are_all_known_keys() -> None:
+    """워크플로가 주입하는 이름이 `load_env`가 받는 목록에 전부 있어야 한다."""
+    import re
+
+    from scoring.config import KNOWN_KEYS
+
+    injected = set(re.findall(r"(\w+): \$\{\{ secrets\.(\w+) \}\}", TEXT))
+    names = {a for a, _ in injected}
+    assert names, "워크플로에 주입되는 비밀값이 없다"
+    assert names <= set(KNOWN_KEYS), f"load_env가 못 받는 이름: {names - set(KNOWN_KEYS)}"
+
+
+def test_env_loads_known_keys_without_a_dotenv_file(
+    tmp_path: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from scoring.config import load_env
+
+    for key in ("KSS_BATCH_PASSWORD", "DART_API_KEY", "KRX_ID"):
+        monkeypatch.setenv(key, f"value-of-{key}")
+    env = load_env(path=tmp_path / "none.env")     # .env가 없는 러너를 흉내 낸다
+    assert env["KSS_BATCH_PASSWORD"] == "value-of-KSS_BATCH_PASSWORD"
+    assert env["DART_API_KEY"] == "value-of-DART_API_KEY"
+    assert env["KRX_ID"] == "value-of-KRX_ID"
+
+
+def test_empty_environment_value_does_not_shadow_dotenv(
+    tmp_path: Any, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    """빈 환경변수가 `.env` 값을 덮으면 안 된다 — Actions는 미설정 Secret을 빈 문자열로 준다."""
+    from scoring.config import load_env
+
+    dotenv = tmp_path / ".env"
+    dotenv.write_text("DART_API_KEY=from-dotenv\n", encoding="utf-8")
+    monkeypatch.setenv("DART_API_KEY", "")
+    assert load_env(path=dotenv)["DART_API_KEY"] == "from-dotenv"
